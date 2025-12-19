@@ -8,9 +8,19 @@ import pandas as pd
 import streamlit as st
 import altair as alt
 import streamlit as st
-st.set_page_config(page_title="TEST", layout="wide")
-st.write("✅ APP NYALA - SAMPE SINI AMAN")
-st.stop()
+import traceback
+
+st.set_page_config(page_title="Prediksi Kebutuhan Pisang", page_icon="🍌", layout="wide")
+
+try:
+    st.success("✅ BOOT OK - mulai jalanin kode utama...")
+    # ====== KODE APP LU YANG LAMA LANJUT DI BAWAH INI ======
+
+except Exception:
+    st.error("❌ App crash saat start. Ini errornya:")
+    st.code(traceback.format_exc())
+    st.stop()
+
 
 # =========================================================
 # CONFIG
@@ -864,4 +874,5 @@ elif page == "Upload":
 
         except Exception as e:
             st.error(f"Gagal memproses SARIMA: {e}")
+
 
