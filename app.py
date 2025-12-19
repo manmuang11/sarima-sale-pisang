@@ -7,7 +7,6 @@ from io import BytesIO
 import pandas as pd
 import streamlit as st
 import altair as alt
-from statsmodels.tsa.statespace.sarimax import SARIMAX
 
 # =========================================================
 # CONFIG
@@ -22,18 +21,19 @@ st.set_page_config(
 BASE_DIR = Path(__file__).parent
 ASSET_DIR = BASE_DIR / "assets"
 LOGO_PATH = ASSET_DIR / "logo.png"
-THEME_CSS_PATH = BASE_DIR / "theme.css"  # pake CSS lu
+THEME_CSS_PATH = BASE_DIR / "theme.css"
 
 DEFAULT_HIST_FILE = "data_umkm.xlsx"
+DEFAULT_PRED_FILE = "prediksi_default.xlsx"  # backup hasil prediksi (opsional)
 
 # =========================================================
-# LOAD CSS (theme.css) + fallback minimal kalau file gak ada
+# LOAD CSS (theme.css)
 # =========================================================
 def load_css():
     if THEME_CSS_PATH.exists():
         st.markdown(f"<style>{THEME_CSS_PATH.read_text(encoding='utf-8')}</style>", unsafe_allow_html=True)
     else:
-        # fallback minimal biar tetap readable kalau theme.css belum ada
+        # fallback minimal (kalau theme.css belum ada)
         st.markdown(
             """
             <style>
@@ -58,17 +58,19 @@ load_css()
 def img_to_base64(path: Path) -> str:
     return base64.b64encode(path.read_bytes()).decode("utf-8")
 
-logo_html = "🍌"
+logo_html = ""
 if LOGO_PATH.exists():
-    b64 = img_to_base64(LOGO_PATH)
-    logo_html = f"<img src='data:image/png;base64,{b64}'/>"
+    logo_html = f"<img src='data:image/png;base64,{img_to_base64(LOGO_PATH)}'/>"
+
+def render_logo_fallback():
+    return logo_html if logo_html else "🍌"
 
 # =========================================================
 # USERS (st.secrets) + fallback
 # =========================================================
 def get_users_from_secrets():
     """
-    .streamlit/secrets.toml contoh:
+    Secrets format (Streamlit Cloud):
     [users.admin]
     password="admin123"
     role="admin"
@@ -98,6 +100,8 @@ if "username" not in st.session_state:
     st.session_state.username = None
 if "page" not in st.session_state:
     st.session_state.page = "Dashboard"
+
+# hasil prediksi terbaru (dari proses admin)
 if "data_override" not in st.session_state:
     st.session_state.data_override = None
 
@@ -105,14 +109,13 @@ if "data_override" not in st.session_state:
 # LOGIN UI
 # =========================================================
 def render_login_page():
-    # hide sidebar
     st.markdown("<div class='hide-sidebar'></div>", unsafe_allow_html=True)
 
     st.markdown("<div class='login-wrap'>", unsafe_allow_html=True)
     st.markdown(
         f"""
         <div class="login-card">
-          <div class="login-badge">{logo_html}</div>
+          <div class="login-badge">{render_logo_fallback()}</div>
           <div class="login-title">Login</div>
           <div class="login-sub">Masuk untuk mengakses dashboard.</div>
         </div>
@@ -131,7 +134,6 @@ def render_login_page():
         "</div>",
         unsafe_allow_html=True
     )
-
     st.markdown("</div>", unsafe_allow_html=True)
     return submit, username, password
 
@@ -175,7 +177,6 @@ ID_MONTH_NAMES = {
     5: "Mei", 6: "Juni", 7: "Juli", 8: "Agustus",
     9: "September", 10: "Oktober", 11: "November", 12: "Desember",
 }
-
 def month_name_id(m: int) -> str:
     return ID_MONTH_NAMES.get(int(m), str(m))
 
@@ -186,7 +187,7 @@ def fmt_int(v: float) -> str:
         return "—"
 
 # =========================================================
-# UNIT (Kg <-> Sisir) - patokan UMKM: 450 sisir = 250 kg
+# UNIT (Kg <-> Sisir)
 # =========================================================
 SISIR_PER_KG = 450 / 250  # 1.8
 
@@ -203,7 +204,7 @@ def fmt_dual_units(v_kg: float) -> tuple[str, str]:
     return f"{fmt_int(v_kg)} kg", f"{fmt_int(v_sisir)} sisir"
 
 # =========================================================
-# SIMPLE UI HELPERS (tanpa CSS tambahan)
+# UI HELPERS (simple)
 # =========================================================
 def card(title: str, value: str, sub: str = ""):
     st.markdown(
@@ -217,7 +218,7 @@ def card(title: str, value: str, sub: str = ""):
         unsafe_allow_html=True
     )
 
-def empty_state(title="Data belum tersedia", desc="Minta Admin memperbarui data."):
+def empty_state(title="Data belum tersedia", desc="Minta Admin memperbarui data/prediksi."):
     st.markdown(
         f"""
         <div style="background:#fff;border-radius:22px;padding:18px 18px;box-shadow:0 14px 30px rgba(15,23,42,0.08);border:1px solid rgba(0,0,0,0.03);">
@@ -336,7 +337,44 @@ def parse_historical_excel(file_path_or_buffer):
     return out
 
 # =========================================================
-# SARIMA
+# LOAD DEFAULT PRED FILE (backup untuk UMKM)
+# =========================================================
+@st.cache_data(show_spinner=False)
+def load_default_pred_file():
+    p = BASE_DIR / DEFAULT_PRED_FILE
+    if not p.exists():
+        return pd.DataFrame(columns=["tanggal", "jenis", "nilai", "min", "max"])
+
+    df = pd.read_excel(p, engine="openpyxl")
+    df.columns = [str(c).strip().lower() for c in df.columns]
+
+    # harus ada header ini
+    if "tanggal" not in df.columns or "nilai" not in df.columns:
+        # jangan bikin crash; anggap gak ada prediksi
+        return pd.DataFrame(columns=["tanggal", "jenis", "nilai", "min", "max"])
+
+    df["tanggal"] = pd.to_datetime(df["tanggal"], errors="coerce")
+    df = df[df["tanggal"].notna()].copy()
+
+    df["nilai"] = pd.to_numeric(df["nilai"], errors="coerce")
+    df = df[df["nilai"].notna()].copy()
+
+    if "min" not in df.columns:
+        df["min"] = math.nan
+    else:
+        df["min"] = pd.to_numeric(df["min"], errors="coerce")
+
+    if "max" not in df.columns:
+        df["max"] = math.nan
+    else:
+        df["max"] = pd.to_numeric(df["max"], errors="coerce")
+
+    df["jenis"] = "Perkiraan"
+    df = df[["tanggal", "jenis", "nilai", "min", "max"]].sort_values("tanggal").reset_index(drop=True)
+    return df
+
+# =========================================================
+# SARIMA (jalan hanya saat Admin klik)
 # =========================================================
 def build_monthly_series(df_hist: pd.DataFrame) -> pd.Series:
     s = df_hist.set_index("tanggal")["nilai"].sort_index()
@@ -345,7 +383,15 @@ def build_monthly_series(df_hist: pd.DataFrame) -> pd.Series:
         s = s.interpolate(limit_direction="both")
     return s
 
-def run_sarima_forecast(series: pd.Series, steps: int, order=(1, 1, 1), seasonal_order=(1, 1, 1, 12)):
+def run_sarima_forecast(
+    series: pd.Series,
+    steps: int,
+    order=(1, 1, 1),
+    seasonal_order=(1, 1, 1, 12),
+    maxiter: int = 80,
+):
+    from statsmodels.tsa.statespace.sarimax import SARIMAX
+
     model = SARIMAX(
         series,
         order=order,
@@ -353,7 +399,8 @@ def run_sarima_forecast(series: pd.Series, steps: int, order=(1, 1, 1), seasonal
         enforce_stationarity=False,
         enforce_invertibility=False,
     )
-    res = model.fit(disp=False)
+    res = model.fit(disp=False, maxiter=maxiter)
+
     fc = res.get_forecast(steps=steps)
     mean = fc.predicted_mean
     ci = fc.conf_int(alpha=0.05)
@@ -372,14 +419,9 @@ def build_tidy_from_hist_and_pred(df_hist: pd.DataFrame, df_pred: pd.DataFrame):
     df_act["jenis"] = "Aktual"
     df_act["min"] = math.nan
     df_act["max"] = math.nan
+    df_act = df_act[["tanggal", "jenis", "nilai", "min", "max"]].copy()
 
-    tidy = pd.concat(
-        [
-            df_act[["tanggal", "jenis", "nilai", "min", "max"]],
-            df_pred[["tanggal", "jenis", "nilai", "min", "max"]],
-        ],
-        ignore_index=True
-    )
+    tidy = pd.concat([df_act, df_pred], ignore_index=True)
     tidy["tanggal"] = pd.to_datetime(tidy["tanggal"])
     tidy = tidy.sort_values(["tanggal", "jenis"]).reset_index(drop=True)
 
@@ -490,21 +532,41 @@ def month_table(df_pred: pd.DataFrame, year: int):
     return out
 
 # =========================================================
-# LOAD DEFAULT (historis -> sarima -> dashboard)
+# LOAD HIST (ringan) + load pred default
 # =========================================================
 @st.cache_data(show_spinner=True)
-def load_default_data():
+def load_hist_only():
     p = BASE_DIR / DEFAULT_HIST_FILE
     if not p.exists():
-        raise FileNotFoundError(f"File '{DEFAULT_HIST_FILE}' tidak ditemukan di folder yang sama dengan app.py")
+        # jangan crash parah; kasih df kosong
+        return pd.DataFrame(columns=["tanggal", "nilai"])
+    return parse_historical_excel(p)
 
-    df_hist = parse_historical_excel(p)
-    series = build_monthly_series(df_hist)
+df_hist_default = load_hist_only()
 
-    df_pred = run_sarima_forecast(series, steps=24, order=(1, 1, 1), seasonal_order=(1, 1, 1, 12))
-    return build_tidy_from_hist_and_pred(df_hist, df_pred)
+# prioritas data:
+# 1) hasil proses admin (override)
+# 2) prediksi_default.xlsx (backup)
+df_pred_all = pd.DataFrame(columns=["tanggal", "jenis", "nilai", "min", "max"])
+df_actual_all = pd.DataFrame(columns=["tanggal", "jenis", "nilai", "min", "max"])
+tidy_all = pd.DataFrame(columns=["tanggal", "jenis", "nilai", "min", "max"])
 
-tidy_all, df_actual_all, df_pred_all = load_default_data()
+# build aktual (kalau historis ada)
+if not df_hist_default.empty:
+    df_actual_all = df_hist_default.copy()
+    df_actual_all["jenis"] = "Aktual"
+    df_actual_all["min"] = math.nan
+    df_actual_all["max"] = math.nan
+    df_actual_all = df_actual_all[["tanggal", "jenis", "nilai", "min", "max"]].copy()
+
+# load pred default
+df_pred_default = load_default_pred_file()
+
+# set data awal (default)
+df_pred_all = df_pred_default.copy() if not df_pred_default.empty else df_pred_all
+tidy_all = pd.concat([df_actual_all, df_pred_all], ignore_index=True)
+
+# override kalau admin sudah proses
 if st.session_state.data_override is not None:
     tidy_all, df_actual_all, df_pred_all = st.session_state.data_override
 
@@ -515,7 +577,7 @@ with st.sidebar:
     st.markdown(
         f"""
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-          <div class="logo-circle big">{logo_html}</div>
+          <div class="logo-circle big">{render_logo_fallback()}</div>
           <div>
             <div style="font-weight:800;color:#222;line-height:1.1;">Sale Pisang</div>
             <div style="font-weight:800;color:#222;line-height:1.1;">Bungo Family</div>
@@ -526,7 +588,10 @@ with st.sidebar:
         unsafe_allow_html=True
     )
 
-    st.markdown(f"<div class='small-muted'>Login sebagai: <b>{'Admin' if IS_ADMIN else 'UMKM'}</b></div>", unsafe_allow_html=True)
+    st.markdown(
+        f"<div class='small-muted'>Login sebagai: <b>{'Admin' if IS_ADMIN else 'UMKM'}</b></div>",
+        unsafe_allow_html=True
+    )
     st.markdown("<hr/>", unsafe_allow_html=True)
 
     def go(p):
@@ -558,13 +623,13 @@ if IS_UMKM and page == "Upload":
     st.rerun()
 
 # =========================================================
-# HEADER (simple; biar tetep cocok CSS lu)
+# HEADER
 # =========================================================
 st.markdown(
     f"""
     <div class="header-banana">
       <div class="header-left">
-        <div class="logo-circle big">{logo_html}</div>
+        <div class="logo-circle big">{render_logo_fallback()}</div>
         <div class="title-block">
           <h1>Berapa Pisang yang Perlu Disiapkan?</h1>
           <p>Prediksi kebutuhan pisang per bulan (SARIMA)</p>
@@ -575,7 +640,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 st.write("")
-
 st.markdown(
     """
     <div class="hint-banner">
@@ -587,11 +651,25 @@ st.markdown(
 )
 
 # =========================================================
+# GUARD: kalau belum ada prediksi sama sekali
+# =========================================================
+if df_pred_all.empty:
+    if IS_ADMIN:
+        st.warning(
+            "Belum ada hasil prediksi. "
+            "Admin: buka menu 'Upload & Proses SARIMA' lalu klik Proses. "
+            "Opsional: isi prediksi_default.xlsx biar UMKM langsung lihat."
+        )
+    else:
+        st.warning("Belum ada hasil prediksi. Silakan minta Admin memproses prediksi terlebih dahulu.")
+    st.stop()
+
+# =========================================================
 # FILTER
 # =========================================================
 years_available = sorted(df_pred_all["tanggal"].dt.year.unique()) if not df_pred_all.empty else []
 if not years_available:
-    empty_state("Tidak ada data prediksi", "Minta Admin upload data historis dan proses prediksi.")
+    st.warning("Prediksi ada, tapi format tanggal tidak terbaca. Cek kolom 'tanggal' di file prediksi.")
     st.stop()
 
 if "filter_year" not in st.session_state:
@@ -679,7 +757,9 @@ elif page == "Detail":
         tbl_show = tbl.copy()
         for col in ["Perkiraan_kg", "Min_kg", "Maks_kg"]:
             if col in tbl_show.columns:
-                tbl_show[col.replace("_kg", "_sisir")] = tbl_show[col].apply(lambda x: convert_value_kg_to_unit(x, "Sisir"))
+                tbl_show[col.replace("_kg", "_sisir")] = tbl_show[col].apply(
+                    lambda x: convert_value_kg_to_unit(x, "Sisir")
+                )
 
         tbl_show = tbl_show.rename(columns={
             "Perkiraan_kg": "Perkiraan (kg)",
@@ -709,13 +789,11 @@ elif page == "Upload":
         st.stop()
 
     st.subheader("Admin: Upload Data Historis & Proses SARIMA")
-    st.caption("Alur: Upload historis → sistem proses SARIMA → hasil langsung masuk dashboard.")
+    st.caption("Alur: Upload historis → klik Proses SARIMA → hasil langsung masuk dashboard (UMKM tinggal lihat).")
 
     uploaded = st.file_uploader("Upload file historis (.xlsx)", type=["xlsx", "xls"])
-
     steps = st.number_input("Prediksi berapa bulan ke depan?", min_value=3, max_value=36, value=24, step=1)
 
-    # Default (biar dosen happy)
     order = (1, 1, 1)
     seasonal_order = (1, 1, 1, 12)
 
@@ -734,23 +812,51 @@ elif page == "Upload":
         order = (int(p), int(d), int(q))
         seasonal_order = (int(P), int(D), int(Q), int(s))
 
+    st.markdown("### Preview historis")
     if uploaded is None:
-        st.info("Upload dulu file historis untuk diproses.")
-    else:
+        st.info("Upload file historis untuk diproses.")
+        st.stop()
+
+    try:
+        df_hist = parse_historical_excel(uploaded)
+        st.dataframe(df_hist.head(12), use_container_width=True)
+    except Exception as e:
+        st.error(f"Gagal baca historis: {e}")
+        st.stop()
+
+    if st.button("⚙️ Proses Prediksi & Terapkan", use_container_width=True):
         try:
-            df_hist = parse_historical_excel(uploaded)
-            st.write("Preview historis:")
-            st.dataframe(df_hist.head(10), use_container_width=True)
-
-            if st.button("⚙️ Proses Prediksi & Terapkan", use_container_width=True):
+            with st.spinner("Sedang memproses SARIMA (mode aman)..."):
                 series = build_monthly_series(df_hist)
-                df_pred = run_sarima_forecast(series, steps=int(steps), order=order, seasonal_order=seasonal_order)
-                tidy_new, act_new, pred_new = build_tidy_from_hist_and_pred(df_hist, df_pred)
 
+                # limiter biar ringan (5 tahun terakhir)
+                if len(series) > 60:
+                    series = series.iloc[-60:]
+
+                df_pred = run_sarima_forecast(
+                    series,
+                    steps=int(steps),
+                    order=order,
+                    seasonal_order=seasonal_order,
+                    maxiter=80,
+                )
+
+                tidy_new, act_new, pred_new = build_tidy_from_hist_and_pred(df_hist, df_pred)
                 st.session_state.data_override = (tidy_new, act_new, pred_new)
-                st.success("Berhasil! Prediksi terbaru sudah diterapkan ke dashboard.")
-                st.session_state.page = "Dashboard"
-                st.rerun()
+
+            st.success("Berhasil! Prediksi terbaru sudah diterapkan ke dashboard.")
+
+            # kasih download untuk dijadikan prediksi_default.xlsx
+            st.download_button(
+                "⬇️ Unduh prediksi terbaru (jadikan prediksi_default.xlsx)",
+                data=to_excel_bytes(df_pred, sheet_name="Prediksi"),
+                file_name="prediksi_default.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True,
+            )
+
+            st.session_state.page = "Dashboard"
+            st.rerun()
 
         except Exception as e:
-            st.error(f"Gagal memproses: {e}")
+            st.error(f"Gagal memproses SARIMA: {e}")
