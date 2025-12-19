@@ -7,6 +7,10 @@ from io import BytesIO
 import pandas as pd
 import streamlit as st
 import altair as alt
+import streamlit as st
+st.set_page_config(page_title="TEST", layout="wide")
+st.write("✅ APP NYALA - SAMPE SINI AMAN")
+st.stop()
 
 # =========================================================
 # CONFIG
@@ -860,3 +864,4 @@ elif page == "Upload":
 
         except Exception as e:
             st.error(f"Gagal memproses SARIMA: {e}")
+
