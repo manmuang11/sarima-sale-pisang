@@ -1,10 +1,9 @@
 streamlit
 pandas
 numpy
+altair
 plotly
 openpyxl
 xlsxwriter
 statsmodels
-
-
-
+scipy
