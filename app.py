@@ -17,30 +17,35 @@ st.set_page_config(
 )
 
 # =========================================================
-# LOAD CSS (WAJIB SEBELUM LOGIN)
+# LOAD CSS (WAJIB PALING ATAS)
 # =========================================================
 load_css()
 
 # =========================================================
-# LOGIN PAGE (HIDE SIDEBAR TOTAL)
+# LOGIN PAGE (HIDE HEADER + SIDEBAR TOTAL)
 # =========================================================
 st.markdown(
     """
     <style>
-    /* hide hamburger */
+    /* HILANGIN HEADER KOSONG STREAMLIT */
+    header[data-testid="stHeader"]{display:none;}
+
+    /* HILANGIN HAMBURGER */
     [data-testid="stSidebarCollapsedControl"]{display:none;}
 
-    /* hide sidebar */
+    /* HILANGIN SIDEBAR */
     section[data-testid="stSidebar"]{display:none;}
     </style>
     """,
     unsafe_allow_html=True
 )
 
-# render login card
+# =========================================================
+# RENDER LOGIN CARD
+# =========================================================
 role = login()
 
-# kalau belum login, STOP di sini (jangan render apa pun lagi)
+# STOP DI SINI KALO BELUM LOGIN
 if role is None:
     st.stop()
 
