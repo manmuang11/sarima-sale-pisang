@@ -132,6 +132,22 @@ def load_css():
           padding: 0.75rem 1rem;
           font-size: 16px;
         }
+                /* =========================
+           FORCE LOGIN CENTER (FIX STREAMLIT)
+           ========================= */
+
+        /* MATIIN padding bawaan streamlit */
+        div.block-container{
+          padding-top: 0rem !important;
+          padding-bottom: 0rem !important;
+        }
+
+        /* Paksa tinggi full layar + naikin posisi */
+        .login-wrap{
+          min-height: 100vh !important;
+          margin-top: -4rem;   /* NAIKIN */
+        }
+
 
         </style>
         """,
