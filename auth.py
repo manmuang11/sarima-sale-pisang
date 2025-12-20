@@ -6,11 +6,6 @@ def _hash(pw: str) -> str:
     return hashlib.sha256(pw.encode("utf-8")).hexdigest()
 
 def _get_users():
-    """
-    Prioritas:
-    1) st.secrets["users"] (kalau di Streamlit Cloud / secrets.toml)
-    2) fallback hardcode (buat development)
-    """
     if "users" in st.secrets:
         return st.secrets["users"]
 
@@ -25,15 +20,11 @@ def logout_button():
         st.rerun()
 
 def login():
-    """
-    Return role: "admin" / "umkm" atau None kalau belum login.
-    """
     if st.session_state.get("logged_in"):
         return st.session_state.get("role")
 
     users = _get_users()
 
-    # --- Center Login Card ---
     st.markdown('<div class="login-wrap">', unsafe_allow_html=True)
     st.markdown('<div class="login-card">', unsafe_allow_html=True)
 
@@ -47,13 +38,17 @@ def login():
     remember = st.checkbox("Ingat saya", value=False)
     do_login = st.button("MASUK", use_container_width=True)
 
-    st.markdown('<div class="login-hint">UMKM hanya melihat hasil. Admin mengelola data dan prediksi.</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="login-hint">UMKM hanya melihat hasil. Admin mengelola data dan prediksi.</div>',
+        unsafe_allow_html=True
+    )
 
     st.markdown("</div></div>", unsafe_allow_html=True)
-    # --- End Card ---
 
     if do_login:
-        u = users.get(username)
+        username_clean = (username or "").strip()
+        u = users.get(username_clean)
+
         if not u:
             st.error("Username tidak ditemukan.")
             return None
@@ -63,10 +58,9 @@ def login():
             return None
 
         st.session_state["logged_in"] = True
-        st.session_state["username"] = username
+        st.session_state["username"] = username_clean
         st.session_state["role"] = u.get("role", "umkm")
         st.session_state["remember"] = remember
-        st.success("Login berhasil!")
         st.rerun()
 
     return None
