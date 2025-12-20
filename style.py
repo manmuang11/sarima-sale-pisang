@@ -24,10 +24,8 @@ def load_css():
 
         /* Background (lebih creamy / glow) */
         .stApp{
-          background: radial-gradient(1200px 600px at 50% 10%, #FFF3C6 0%, var(--bg) 55%, var(--bg) 100%);
+          background: radial-gradient(1200px 700px at 50% 8%, #FFF3C6 0%, var(--bg) 55%, var(--bg) 100%);
         }
-
-        .block-container { padding-top: 1.2rem; padding-bottom: 2.5rem; }
 
         /* Card feel */
         .stMarkdown, .stDataFrame, .stTable, .stAlert, .stExpander {
@@ -60,7 +58,7 @@ def load_css():
           background: #fff !important;
         }
 
-        /* Sidebar */
+        /* Sidebar (akan muncul setelah login) */
         section[data-testid="stSidebar"]{
           background: #fff;
           border-right: 1px solid var(--border);
@@ -69,34 +67,40 @@ def load_css():
         /* =========================
            LOGIN CARD (FIGMA VIBES)
            ========================= */
+
         .login-wrap{
-          min-height: 72vh;
+          min-height: 100vh;
           display:flex;
           align-items:center;
           justify-content:center;
+          padding: 0 16px;
         }
 
         .login-card{
-          width: min(520px, 92vw);
-          background: rgba(255,255,255,0.88);
-          border: 1px solid rgba(234,223,203,0.9);
+          width: 420px;
+          max-width: 92vw;
+          background: rgba(255,255,255,0.92);
+          border: 1px solid rgba(234,223,203,0.95);
           border-radius: 22px;
-          box-shadow: 0 18px 55px rgba(0,0,0,0.10);
-          padding: 28px 28px 22px 28px;
-          backdrop-filter: blur(10px);
+          box-shadow: 0 18px 55px rgba(0,0,0,0.12);
+          padding: 26px 24px 20px 24px;
+          position: relative;
         }
 
         .login-icon{
-          width: 64px;
-          height: 64px;
+          position:absolute;
+          left: 50%;
+          top: -34px;
+          transform: translateX(-50%);
+          width: 68px;
+          height: 68px;
           border-radius: 999px;
           background: linear-gradient(180deg, #FFF1B8, #F4B400);
           display:flex;
           align-items:center;
           justify-content:center;
-          margin: -54px auto 10px auto;
-          border: 6px solid rgba(251,247,239,0.95);
-          box-shadow: 0 10px 30px rgba(0,0,0,0.10);
+          border: 7px solid rgba(251,247,239,0.98);
+          box-shadow: 0 12px 32px rgba(0,0,0,0.12);
           font-size: 28px;
         }
 
@@ -104,7 +108,8 @@ def load_css():
           text-align:center;
           font-weight: 800;
           font-size: 34px;
-          margin: 4px 0 2px 0;
+          margin-top: 18px;
+          margin-bottom: 2px;
           color: var(--text);
         }
 
@@ -112,42 +117,50 @@ def load_css():
           text-align:center;
           color: var(--muted);
           margin-bottom: 18px;
+          font-size: 14px;
         }
 
         .login-hint{
           text-align:center;
           color: var(--muted);
-          font-size: 13px;
+          font-size: 12.5px;
           margin-top: 14px;
         }
 
-        /* Rapihin input spacing di dalam card */
         .login-card [data-testid="stTextInput"]{
-          margin-top: 6px;
+          margin: 10px 0 0 0;
         }
 
-        /* Biar button Masuk full */
+        .login-card input{
+          height: 46px !important;
+          border-radius: 14px !important;
+        }
+
+        .login-card [data-testid="stCheckbox"]{
+          margin-top: 8px;
+        }
+
         .login-card .stButton > button{
           width: 100%;
-          padding: 0.75rem 1rem;
-          font-size: 16px;
+          padding: 0.85rem 1rem;
+          font-size: 15px;
+          border-radius: 16px;
         }
-                /* =========================
-           FORCE LOGIN CENTER (FIX STREAMLIT)
+
+        /* =========================
+           FORCE LOGIN CENTER (FINAL)
            ========================= */
 
-        /* MATIIN padding bawaan streamlit */
+        /* MATIIN HEADER STREAMLIT (ruang kosong atas) */
+        header[data-testid="stHeader"]{
+          display: none;
+        }
+
+        /* MATIIN PADDING DEFAULT STREAMLIT */
         div.block-container{
-          padding-top: 0rem !important;
-          padding-bottom: 0rem !important;
+          padding-top: 0 !important;
+          padding-bottom: 0 !important;
         }
-
-        /* Paksa tinggi full layar + naikin posisi */
-        .login-wrap{
-          min-height: 100vh !important;
-          margin-top: -4rem;   /* NAIKIN */
-        }
-
 
         </style>
         """,
