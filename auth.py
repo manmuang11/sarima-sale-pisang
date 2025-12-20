@@ -1,6 +1,9 @@
 # auth.py
 import streamlit as st
 import hashlib
+from pathlib import Path
+
+LOGO_PATH = Path("assets") / "logo.png"
 
 def _hash(pw: str) -> str:
     return hashlib.sha256(pw.encode("utf-8")).hexdigest()
@@ -25,30 +28,46 @@ def login():
 
     users = _get_users()
 
+    # === WRAPPER FIXED CENTER ===
     st.markdown('<div class="login-wrap">', unsafe_allow_html=True)
+
+    # bikin container card (HTML)
     st.markdown('<div class="login-card">', unsafe_allow_html=True)
 
-    st.markdown('<div class="login-icon">👤</div>', unsafe_allow_html=True)
+    # ICON/LOGO bulat di atas card
+    st.markdown('<div class="login-icon">', unsafe_allow_html=True)
+    if LOGO_PATH.exists():
+        st.image(str(LOGO_PATH), width=44)
+    else:
+        st.markdown("🍌")
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # title
     st.markdown('<div class="login-title">Login</div>', unsafe_allow_html=True)
     st.markdown('<div class="login-sub">Masuk untuk mengakses dashboard.</div>', unsafe_allow_html=True)
 
-    username = st.text_input("Username", placeholder="admin / umkm", label_visibility="collapsed")
-    password = st.text_input("Password", type="password", placeholder="Password", label_visibility="collapsed")
-
-    remember = st.checkbox("Ingat saya", value=False)
-    do_login = st.button("MASUK", use_container_width=True)
+    # form area (biar enter bisa submit)
+    with st.form("login_form", clear_on_submit=False):
+        username = st.text_input("", placeholder="Username (admin / umkm)")
+        password = st.text_input("", type="password", placeholder="Password")
+        remember = st.checkbox("Ingat saya", value=False)
+        do_login = st.form_submit_button("MASUK", use_container_width=True)
 
     st.markdown(
         '<div class="login-hint">UMKM hanya melihat hasil. Admin mengelola data dan prediksi.</div>',
         unsafe_allow_html=True
     )
 
-    st.markdown("</div></div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)   # end login-card
+    st.markdown("</div>", unsafe_allow_html=True)   # end login-wrap
 
     if do_login:
         username_clean = (username or "").strip()
-        u = users.get(username_clean)
+        if not username_clean or not password:
+            st.warning("Username dan password wajib diisi.")
+            return None
 
+        u = users.get(username_clean)
         if not u:
             st.error("Username tidak ditemukan.")
             return None
