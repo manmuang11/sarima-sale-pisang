@@ -3,15 +3,12 @@ import streamlit as st
 from style import load_css
 from auth import login, logout_button
 
-# (nanti step berikutnya kita isi beneran)
-def admin_page_placeholder():
-    st.markdown("## 🛠️ Admin")
-    st.info("Halaman admin belum diisi. Next step kita bikin admin.py.")
+from admin import admin_page
+from umkm import umkm_page
 
-def umkm_page_placeholder():
-    st.markdown("## 🍌 UMKM")
-    st.info("Halaman UMKM belum diisi. Next step kita bikin umkm.py.")
-
+# =========================================================
+# PAGE CONFIG
+# =========================================================
 st.set_page_config(
     page_title="Prediksi Kebutuhan Pisang",
     page_icon="🍌",
@@ -21,24 +18,32 @@ st.set_page_config(
 
 load_css()
 
-# Sidebar header
+# =========================================================
+# SIDEBAR HEADER
+# =========================================================
 with st.sidebar:
     st.markdown("### 🍌 Prediksi Pisang")
     st.caption("Sistem Prediksi Kebutuhan Pisang")
     st.divider()
 
+# =========================================================
+# LOGIN
+# =========================================================
 role = login()
-
 if role is None:
     st.stop()
 
-# setelah login
+# =========================================================
+# SIDEBAR AFTER LOGIN
+# =========================================================
 with st.sidebar:
     st.success(f"Login sebagai: **{role.upper()}**")
     logout_button()
 
-# routing per role
+# =========================================================
+# ROUTING PER ROLE
+# =========================================================
 if role == "admin":
-    admin_page_placeholder()
+    admin_page()
 else:
-    umkm_page_placeholder()
+    umkm_page()
