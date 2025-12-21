@@ -114,39 +114,6 @@ def load_css():
           position: relative;
         }
 
-        /* ================= LOGO BUBBLE ================= */
-        .logo-bubble{
-          width: 68px;
-          height: 68px;
-          border-radius: 999px;
-          background: linear-gradient(
-            180deg,
-            var(--yellow-soft),
-            var(--yellow)
-          );
-          border: 7px solid var(--bg);
-          box-shadow: 0 12px 32px rgba(0,0,0,0.12);
-
-          display: flex;
-          align-items: center;
-          justify-content: center;
-
-          margin: -42px auto 10px auto;
-          overflow: hidden;
-          padding: 0 !important;
-        }
-
-        .logo-bubble img{
-          display: block;
-          margin: 0 auto;
-          max-width: 100%;
-          max-height: 100%;
-
-          /* OPTIONAL: kalau logo PNG lo visually miring, nyalain ini
-             dan atur px-nya (misal 6px) */
-          /* transform: translateX(6px); */
-        }
-
         /* ================= TEXT ================= */
         .login-title{
           text-align: center;
