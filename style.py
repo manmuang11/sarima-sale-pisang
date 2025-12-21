@@ -158,6 +158,16 @@ def load_css():
           border-radius: 16px !important;
           font-weight: 800 !important;
         }
+        
+        /* PAKSA HILANGIN PILL/DEKOR NYASAR DI LOGIN */
+          .login-wrap::before,
+          .login-wrap::after,
+          .login-card::before,
+          .login-card::after{
+          content: none !important;
+          display: none !important;
+         }
+
 
         </style>
         """,
