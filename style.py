@@ -83,8 +83,14 @@ def load_css():
           display: flex;
           align-items: center;
           justify-content: center;
-          z-index: 9999;
+          z-index: 99999;
           padding: 18px;
+
+          /* IMPORTANT: pastiin overlay bisa diklik */
+          pointer-events: auto !important;
+        }
+        .login-wrap *{
+          pointer-events: auto !important;
         }
 
         /* Kunci lebar kolom tengah */
@@ -135,6 +141,10 @@ def load_css():
           margin: 0 auto;
           max-width: 100%;
           max-height: 100%;
+
+          /* OPTIONAL: kalau logo PNG lo visually miring, nyalain ini
+             dan atur px-nya (misal 6px) */
+          /* transform: translateX(6px); */
         }
 
         /* ================= TEXT ================= */
@@ -181,6 +191,7 @@ def load_css():
           border-radius: 16px !important;
           font-weight: 800 !important;
         }
+
         </style>
         """,
         unsafe_allow_html=True
