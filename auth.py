@@ -28,38 +28,40 @@ def login():
 
     users = _get_users()
 
-    # === WRAPPER FIXED CENTER ===
+    # ===== Overlay center =====
     st.markdown('<div class="login-wrap">', unsafe_allow_html=True)
 
-    # bikin container card (HTML)
-    st.markdown('<div class="login-card">', unsafe_allow_html=True)
+    # trik: 3 kolom -> tengahnya fixed "card"
+    left, mid, right = st.columns([1.2, 1, 1.2], gap="large")
+    with mid:
+        # card wrapper
+        st.markdown('<div class="login-card">', unsafe_allow_html=True)
 
-    # ICON/LOGO bulat di atas card
-    st.markdown('<div class="login-icon">', unsafe_allow_html=True)
-    if LOGO_PATH.exists():
-        st.image(str(LOGO_PATH), width=44)
-    else:
-        st.markdown("🍌")
-    st.markdown("</div>", unsafe_allow_html=True)
+        # logo bulat (pakai streamlit image di tengah)
+        st.markdown('<div class="logo-bubble">', unsafe_allow_html=True)
+        if LOGO_PATH.exists():
+            st.image(str(LOGO_PATH), width=44)
+        else:
+            st.markdown("🍌")
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    # title
-    st.markdown('<div class="login-title">Login</div>', unsafe_allow_html=True)
-    st.markdown('<div class="login-sub">Masuk untuk mengakses dashboard.</div>', unsafe_allow_html=True)
+        st.markdown('<div class="login-title">Login</div>', unsafe_allow_html=True)
+        st.markdown('<div class="login-sub">Masuk untuk mengakses dashboard.</div>', unsafe_allow_html=True)
 
-    # form area (biar enter bisa submit)
-    with st.form("login_form", clear_on_submit=False):
         username = st.text_input("", placeholder="Username (admin / umkm)")
         password = st.text_input("", type="password", placeholder="Password")
+
         remember = st.checkbox("Ingat saya", value=False)
-        do_login = st.form_submit_button("MASUK", use_container_width=True)
+        do_login = st.button("MASUK", use_container_width=True)
 
-    st.markdown(
-        '<div class="login-hint">UMKM hanya melihat hasil. Admin mengelola data dan prediksi.</div>',
-        unsafe_allow_html=True
-    )
+        st.markdown(
+            '<div class="login-hint">UMKM hanya melihat hasil. Admin mengelola data dan prediksi.</div>',
+            unsafe_allow_html=True
+        )
 
-    st.markdown("</div>", unsafe_allow_html=True)   # end login-card
-    st.markdown("</div>", unsafe_allow_html=True)   # end login-wrap
+        st.markdown("</div>", unsafe_allow_html=True)  # end login-card
+
+    st.markdown("</div>", unsafe_allow_html=True)      # end login-wrap
 
     if do_login:
         username_clean = (username or "").strip()
