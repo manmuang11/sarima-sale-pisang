@@ -21,9 +21,14 @@ def load_css():
           font-family: "Plus Jakarta Sans", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
         }
 
-        /* Background */
+        /* ================= BACKGROUND ================= */
         .stApp{
-          background: radial-gradient(1200px 700px at 50% 8%, #FFF3C6 0%, var(--bg) 55%, var(--bg) 100%);
+          background: radial-gradient(
+            1200px 700px at 50% 8%,
+            #FFF3C6 0%,
+            var(--bg) 55%,
+            var(--bg) 100%
+          );
         }
 
         /* Hide default header */
@@ -33,10 +38,10 @@ def load_css():
         div.block-container{
           padding-top: 0 !important;
           padding-bottom: 0 !important;
-          max-width: 1200px !important;   /* <- ini penting */
+          max-width: 1200px !important;
         }
 
-        /* Buttons global */
+        /* ================= BUTTONS ================= */
         .stButton > button{
           background: var(--yellow);
           color: #1f1f1f;
@@ -55,14 +60,15 @@ def load_css():
           opacity: 0.55;
         }
 
-        /* Inputs global */
-        .stTextInput input, .stSelectbox div[data-baseweb="select"] > div{
+        /* ================= INPUTS ================= */
+        .stTextInput input,
+        .stSelectbox div[data-baseweb="select"] > div{
           border-radius: 14px !important;
           border: 1px solid var(--border) !important;
           background: #fff !important;
         }
 
-        /* Sidebar style */
+        /* ================= SIDEBAR ================= */
         section[data-testid="stSidebar"]{
           background: #fff;
           border-right: 1px solid var(--border);
@@ -81,16 +87,18 @@ def load_css():
           padding: 18px;
         }
 
-        /* KUNCI LEBAR: paksa kolom tengah jadi 420px */
+        /* Kunci lebar kolom tengah */
         .login-wrap div[data-testid="stHorizontalBlock"]{
           justify-content: center !important;
         }
-        .login-wrap div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2){
+        .login-wrap
+        div[data-testid="stHorizontalBlock"]
+        > div[data-testid="column"]:nth-child(2){
           max-width: 420px !important;
           flex: 0 0 420px !important;
         }
 
-        /* Card feel */
+        /* ================= LOGIN CARD ================= */
         .login-card{
           background: rgba(255,255,255,0.95);
           border: 1px solid var(--border);
@@ -100,64 +108,80 @@ def load_css():
           position: relative;
         }
 
-        /* Bubble logo */
+        /* ================= LOGO BUBBLE ================= */
         .logo-bubble{
           width: 68px;
           height: 68px;
           border-radius: 999px;
-          background: linear-gradient(180deg, var(--yellow-soft), var(--yellow));
+          background: linear-gradient(
+            180deg,
+            var(--yellow-soft),
+            var(--yellow)
+          );
           border: 7px solid var(--bg);
           box-shadow: 0 12px 32px rgba(0,0,0,0.12);
-          display:flex;
-          align-items:center;
-          justify-content:center;
+
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
           margin: -42px auto 10px auto;
           overflow: hidden;
+          padding: 0 !important;
         }
 
+        .logo-bubble img{
+          display: block;
+          margin: 0 auto;
+          max-width: 100%;
+          max-height: 100%;
+        }
+
+        /* ================= TEXT ================= */
         .login-title{
-          text-align:center;
-          font-weight:800;
-          font-size:34px;
+          text-align: center;
+          font-weight: 800;
+          font-size: 34px;
           margin: 0 0 4px 0;
           color: var(--text);
         }
 
         .login-sub{
-          text-align:center;
+          text-align: center;
           color: var(--muted);
-          font-size:14px;
-          margin-bottom:18px;
+          font-size: 14px;
+          margin-bottom: 18px;
         }
 
         .login-hint{
-          text-align:center;
-          font-size:12.5px;
+          text-align: center;
+          font-size: 12.5px;
           color: var(--muted);
-          margin-top:14px;
+          margin-top: 14px;
         }
 
-        /* rapihin spacing input */
+        /* ================= FORM SPACING ================= */
         .login-card [data-testid="stTextInput"]{
           margin-top: 10px !important;
         }
+
         .login-card input{
-          height:46px !important;
-          border-radius:14px !important;
+          height: 46px !important;
+          border-radius: 14px !important;
         }
 
         .login-card [data-testid="stCheckbox"]{
           margin-top: 10px !important;
         }
 
-        /* button full */
+        /* ================= FULL BUTTON ================= */
         .login-card .stButton > button{
-          width:100% !important;
-          padding:0.85rem 1rem !important;
-          border-radius:16px !important;
-          font-weight:800 !important;
+          width: 100% !important;
+          padding: 0.85rem 1rem !important;
+          border-radius: 16px !important;
+          font-weight: 800 !important;
         }
         </style>
         """,
-        unsafe_allow_html=True,
+        unsafe_allow_html=True
     )
