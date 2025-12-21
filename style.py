@@ -103,16 +103,15 @@ def load_css():
           max-width: 420px !important;
           flex: 0 0 420px !important;
         }
+.login-card{
+  background: rgba(255,255,255,0.98);
+  border: 2px solid rgba(234,223,203,0.95);
+  border-radius: 22px;
+  box-shadow: 0 16px 45px rgba(0,0,0,0.10);
+  padding: 28px 26px 22px;
+  position: relative;
+}
 
-        /* ================= LOGIN CARD ================= */
-        .login-card{
-          background: rgba(255,255,255,0.95);
-          border: 1px solid var(--border);
-          border-radius: 22px;
-          box-shadow: 0 18px 55px rgba(0,0,0,0.15);
-          padding: 26px 24px 22px;
-          position: relative;
-        }
 
         /* ================= TEXT ================= */
         .login-title{
