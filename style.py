@@ -75,7 +75,7 @@ def load_css():
         }
 
         /* ======================================================
-           LOGIN PAGE (CARD FIXED CENTER)
+           LOGIN PAGE (FIXED OVERLAY + SMALL CARD)
            ====================================================== */
         .login-wrap{
           position: fixed;
@@ -87,7 +87,7 @@ def load_css():
           padding: 18px;
         }
 
-        /* CARD: kunci lebar biar ga melebar */
+        /* CARD: KUNCI LEBAR (ANTI MELEBAR) */
         .login-card{
           width: 420px !important;
           max-width: 92vw !important;
@@ -99,30 +99,27 @@ def load_css():
           position: relative;
         }
 
-        /* Icon/logo bulat di atas card */
-        .login-icon{
-          position:absolute;
-          top:-34px;
-          left:50%;
-          transform:translateX(-50%);
-          width:68px;
-          height:68px;
-          border-radius:999px;
+        /* Bubble logo (GANTI .login-icon) */
+        .logo-bubble{
+          width: 68px;
+          height: 68px;
+          border-radius: 999px;
           background: linear-gradient(180deg, var(--yellow-soft), var(--yellow));
+          border: 7px solid var(--bg);
+          box-shadow: 0 12px 32px rgba(0,0,0,0.12);
           display:flex;
           align-items:center;
           justify-content:center;
-          border:7px solid var(--bg);
-          box-shadow: 0 12px 32px rgba(0,0,0,0.12);
-          overflow: hidden; /* biar logo rapi */
+          margin: -42px auto 10px auto;
+          overflow: hidden;
         }
 
         .login-title{
           text-align:center;
           font-weight:800;
           font-size:34px;
-          margin-top:18px;
-          margin-bottom:4px;
+          margin: 0;
+          margin-bottom: 4px;
           color: var(--text);
         }
 
@@ -140,12 +137,21 @@ def load_css():
           margin-top:14px;
         }
 
-        /* Paksa semua komponen streamlit di dalam card jadi rapih */
-        .login-card [data-testid="stForm"],
-        .login-card [data-testid="stTextInput"],
-        .login-card .stButton,
-        .login-card [data-testid="stCheckbox"]{
-          width: 100% !important;
+        /* =========================
+           FORM FIX (INI YANG BIKIN BOX GEDE HILANG)
+           ========================= */
+
+        /* beberapa versi streamlit ngegambar border/box buat form */
+        .login-card [data-testid="stForm"]{
+          border: none !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          background: transparent !important;
+        }
+
+        /* rapihin spacing input */
+        .login-card [data-testid="stTextInput"]{
+          margin-top: 10px !important;
         }
 
         .login-card input{
@@ -153,6 +159,12 @@ def load_css():
           border-radius:14px !important;
         }
 
+        /* checkbox */
+        .login-card [data-testid="stCheckbox"]{
+          margin-top: 10px !important;
+        }
+
+        /* button full */
         .login-card .stButton > button{
           width:100% !important;
           padding:0.85rem 1rem !important;
