@@ -1,4 +1,3 @@
-# style.py
 import streamlit as st
 
 def load_css():
@@ -27,9 +26,14 @@ def load_css():
           background: radial-gradient(1200px 700px at 50% 8%, #FFF3C6 0%, var(--bg) 55%, var(--bg) 100%);
         }
 
-        /* Card feel */
-        .stMarkdown, .stDataFrame, .stTable, .stAlert, .stExpander {
-          border-radius: 16px;
+        /* Hide default header */
+        header[data-testid="stHeader"]{display:none;}
+
+        /* Jangan bikin page super lebar */
+        div.block-container{
+          padding-top: 0 !important;
+          padding-bottom: 0 !important;
+          max-width: 1200px !important;   /* <- ini penting */
         }
 
         /* Buttons global */
@@ -58,24 +62,14 @@ def load_css():
           background: #fff !important;
         }
 
-        /* Sidebar style (nanti muncul setelah login) */
+        /* Sidebar style */
         section[data-testid="stSidebar"]{
           background: #fff;
           border-right: 1px solid var(--border);
         }
 
         /* ======================================================
-           FORCE CLEAN LAYOUT (BIAR LOGIN NGGAK KEBAWAH)
-           ====================================================== */
-        header[data-testid="stHeader"]{display:none;}
-        div.block-container{
-          padding-top: 0 !important;
-          padding-bottom: 0 !important;
-          max-width: none !important;
-        }
-
-        /* ======================================================
-           LOGIN PAGE (FIXED OVERLAY + SMALL CARD)
+           LOGIN PAGE (OVERLAY)
            ====================================================== */
         .login-wrap{
           position: fixed;
@@ -87,10 +81,17 @@ def load_css():
           padding: 18px;
         }
 
-        /* CARD: KUNCI LEBAR (ANTI MELEBAR) */
+        /* KUNCI LEBAR: paksa kolom tengah jadi 420px */
+        .login-wrap div[data-testid="stHorizontalBlock"]{
+          justify-content: center !important;
+        }
+        .login-wrap div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2){
+          max-width: 420px !important;
+          flex: 0 0 420px !important;
+        }
+
+        /* Card feel */
         .login-card{
-          width: 420px !important;
-          max-width: 92vw !important;
           background: rgba(255,255,255,0.95);
           border: 1px solid var(--border);
           border-radius: 22px;
@@ -99,7 +100,7 @@ def load_css():
           position: relative;
         }
 
-        /* Bubble logo (GANTI .login-icon) */
+        /* Bubble logo */
         .logo-bubble{
           width: 68px;
           height: 68px;
@@ -118,8 +119,7 @@ def load_css():
           text-align:center;
           font-weight:800;
           font-size:34px;
-          margin: 0;
-          margin-bottom: 4px;
+          margin: 0 0 4px 0;
           color: var(--text);
         }
 
@@ -137,29 +137,15 @@ def load_css():
           margin-top:14px;
         }
 
-        /* =========================
-           FORM FIX (INI YANG BIKIN BOX GEDE HILANG)
-           ========================= */
-
-        /* beberapa versi streamlit ngegambar border/box buat form */
-        .login-card [data-testid="stForm"]{
-          border: none !important;
-          padding: 0 !important;
-          margin: 0 !important;
-          background: transparent !important;
-        }
-
         /* rapihin spacing input */
         .login-card [data-testid="stTextInput"]{
           margin-top: 10px !important;
         }
-
         .login-card input{
           height:46px !important;
           border-radius:14px !important;
         }
 
-        /* checkbox */
         .login-card [data-testid="stCheckbox"]{
           margin-top: 10px !important;
         }
@@ -171,7 +157,6 @@ def load_css():
           border-radius:16px !important;
           font-weight:800 !important;
         }
-
         </style>
         """,
         unsafe_allow_html=True,
