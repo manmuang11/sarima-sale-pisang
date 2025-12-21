@@ -1,12 +1,15 @@
 # auth.py
 import streamlit as st
 import hashlib
+import base64
 from pathlib import Path
 
 LOGO_PATH = Path("assets") / "logo.png"
 
+
 def _hash(pw: str) -> str:
     return hashlib.sha256(pw.encode("utf-8")).hexdigest()
+
 
 def _get_users():
     # support Streamlit Cloud secrets.toml
@@ -19,10 +22,21 @@ def _get_users():
         "umkm": {"password_hash": _hash("umkm123"), "role": "umkm"},
     }
 
+
+def _logo_base64(path: Path) -> str | None:
+    try:
+        if path.exists():
+            return base64.b64encode(path.read_bytes()).decode("utf-8")
+    except Exception:
+        pass
+    return None
+
+
 def logout_button():
     if st.button("Logout", use_container_width=True):
         st.session_state.clear()
         st.rerun()
+
 
 def login():
     # already logged in
@@ -39,13 +53,38 @@ def login():
     with mid:
         st.markdown('<div class="login-card">', unsafe_allow_html=True)
 
-        # logo bubble (CSS: .logo-bubble)
-        st.markdown('<div class="logo-bubble">', unsafe_allow_html=True)
-        if LOGO_PATH.exists():
-            st.image(str(LOGO_PATH), width=44)
+        # ===== LOGO BUBBLE (FIX CENTER) =====
+        st.markdown(
+            '<div class="logo-bubble">'
+            '<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;">',
+            unsafe_allow_html=True
+        )
+
+        b64 = _logo_base64(LOGO_PATH)
+        if b64:
+            st.markdown(
+                f"""
+                <img
+                  src="data:image/png;base64,{b64}"
+                  style="
+                    width:44px;
+                    height:44px;
+                    object-fit:contain;
+                    display:block;
+                  "
+                />
+                """,
+                unsafe_allow_html=True
+            )
         else:
-            st.markdown("🍌")
-        st.markdown("</div>", unsafe_allow_html=True)
+            # kalau file ga ketemu, mending kasih teks kecil aja (tanpa emoji)
+            st.markdown(
+                '<div style="font-weight:800;font-size:12px;color:#1f1f1f;">LOGO</div>',
+                unsafe_allow_html=True
+            )
+
+        st.markdown("</div></div>", unsafe_allow_html=True)
+        # ===== END LOGO =====
 
         st.markdown('<div class="login-title">Login</div>', unsafe_allow_html=True)
         st.markdown('<div class="login-sub">Masuk untuk mengakses dashboard.</div>', unsafe_allow_html=True)
@@ -76,7 +115,6 @@ def login():
             st.error("Username tidak ditemukan.")
             return None
 
-        # IMPORTANT: key harus "password_hash"
         if _hash(password) != u.get("password_hash", ""):
             st.error("Password salah.")
             return None
