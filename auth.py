@@ -9,9 +9,11 @@ def _hash(pw: str) -> str:
     return hashlib.sha256(pw.encode("utf-8")).hexdigest()
 
 def _get_users():
+    # support Streamlit Cloud secrets.toml
     if "users" in st.secrets:
         return st.secrets["users"]
 
+    # fallback local
     return {
         "admin": {"password_hash": _hash("admin123"), "role": "admin"},
         "umkm": {"password_hash": _hash("umkm123"), "role": "umkm"},
@@ -23,21 +25,21 @@ def logout_button():
         st.rerun()
 
 def login():
+    # already logged in
     if st.session_state.get("logged_in"):
         return st.session_state.get("role")
 
     users = _get_users()
 
-    # ===== Overlay center =====
+    # overlay wrapper
     st.markdown('<div class="login-wrap">', unsafe_allow_html=True)
 
-    # trik: 3 kolom -> tengahnya fixed "card"
+    # center card using columns (ANTI MELEBAR)
     left, mid, right = st.columns([1.2, 1, 1.2], gap="large")
     with mid:
-        # card wrapper
         st.markdown('<div class="login-card">', unsafe_allow_html=True)
 
-        # logo bulat (pakai streamlit image di tengah)
+        # logo bubble (CSS: .logo-bubble)
         st.markdown('<div class="logo-bubble">', unsafe_allow_html=True)
         if LOGO_PATH.exists():
             st.image(str(LOGO_PATH), width=44)
@@ -74,7 +76,8 @@ def login():
             st.error("Username tidak ditemukan.")
             return None
 
-        if _hash(password) != u["password_hash"]:
+        # IMPORTANT: key harus "password_hash"
+        if _hash(password) != u.get("password_hash", ""):
             st.error("Password salah.")
             return None
 
