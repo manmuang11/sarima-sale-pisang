@@ -53,39 +53,6 @@ def login():
     with mid:
         st.markdown('<div class="login-card">', unsafe_allow_html=True)
 
-        # ===== LOGO BUBBLE (FIX CENTER) =====
-        st.markdown(
-            '<div class="logo-bubble">'
-            '<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;">',
-            unsafe_allow_html=True
-        )
-
-        b64 = _logo_base64(LOGO_PATH)
-        if b64:
-            st.markdown(
-                f"""
-                <img
-                  src="data:image/png;base64,{b64}"
-                  style="
-                    width:44px;
-                    height:44px;
-                    object-fit:contain;
-                    display:block;
-                  "
-                />
-                """,
-                unsafe_allow_html=True
-            )
-        else:
-            # kalau file ga ketemu, mending kasih teks kecil aja (tanpa emoji)
-            st.markdown(
-                '<div style="font-weight:800;font-size:12px;color:#1f1f1f;">LOGO</div>',
-                unsafe_allow_html=True
-            )
-
-        st.markdown("</div></div>", unsafe_allow_html=True)
-        # ===== END LOGO =====
-
         st.markdown('<div class="login-title">Login</div>', unsafe_allow_html=True)
         st.markdown('<div class="login-sub">Masuk untuk mengakses dashboard.</div>', unsafe_allow_html=True)
 
