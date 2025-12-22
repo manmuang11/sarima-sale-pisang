@@ -1,3 +1,4 @@
+# style.py
 import streamlit as st
 
 def load_css():
@@ -75,7 +76,7 @@ def load_css():
         }
 
         /* ======================================================
-           LOGIN PAGE (OVERLAY)
+           LOGIN PAGE (SAFE OVERLAY)  ✅ FIX: button bisa diklik
            ====================================================== */
         .login-wrap{
           position: fixed;
@@ -83,17 +84,16 @@ def load_css():
           display: flex;
           align-items: center;
           justify-content: center;
-          z-index: 99999;
+
+          /* jangan ekstrem biar ga nabrak layer Streamlit */
+          z-index: 10;
           padding: 18px;
 
-          /* IMPORTANT: pastiin overlay bisa diklik */
-          pointer-events: auto !important;
-        }
-        .login-wrap *{
-          pointer-events: auto !important;
+          /* KUNCI: wrapper full-screen JANGAN nangkep klik */
+          pointer-events: none !important;
         }
 
-        /* Kunci lebar kolom tengah */
+        /* kunci lebar kolom tengah (tetap rapi kayak punya kamu) */
         .login-wrap div[data-testid="stHorizontalBlock"]{
           justify-content: center !important;
         }
@@ -103,15 +103,18 @@ def load_css():
           max-width: 420px !important;
           flex: 0 0 420px !important;
         }
-.login-card{
-  background: rgba(255,255,255,0.98);
-  border: 2px solid rgba(234,223,203,0.95);
-  border-radius: 22px;
-  box-shadow: 0 16px 45px rgba(0,0,0,0.10);
-  padding: 28px 26px 22px;
-  position: relative;
-}
 
+        .login-card{
+          background: rgba(255,255,255,0.98);
+          border: 2px solid rgba(234,223,203,0.95);
+          border-radius: 22px;
+          box-shadow: 0 16px 45px rgba(0,0,0,0.10);
+          padding: 28px 26px 22px;
+          position: relative;
+
+          /* KUNCI: yang boleh diklik cuma card + isinya */
+          pointer-events: auto !important;
+        }
 
         /* ================= TEXT ================= */
         .login-title{
@@ -157,17 +160,15 @@ def load_css():
           border-radius: 16px !important;
           font-weight: 800 !important;
         }
-        
+
         /* PAKSA HILANGIN PILL/DEKOR NYASAR DI LOGIN */
-          .login-wrap::before,
-          .login-wrap::after,
-          .login-card::before,
-          .login-card::after{
+        .login-wrap::before,
+        .login-wrap::after,
+        .login-card::before,
+        .login-card::after{
           content: none !important;
           display: none !important;
-         }
-
-
+        }
         </style>
         """,
         unsafe_allow_html=True
