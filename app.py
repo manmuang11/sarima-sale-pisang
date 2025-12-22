@@ -1,6 +1,5 @@
 # app.py
 import streamlit as st
-# from style import load_css   # <-- MATIIN DULU biar ga gelap & ga nge-block klik
 from auth import login, logout_button
 from admin import admin_page
 from umkm import umkm_page
@@ -11,7 +10,34 @@ st.set_page_config(
     layout="wide",
 )
 
-# load_css()  # <-- MATIIN DULU
+# ===== EMERGENCY CSS: matiin overlay gelap yang nyangkut (tanpa style.py) =====
+st.markdown(
+    """
+    <style>
+    /* overlay/backdrop internal streamlit (variasi versi) */
+    div[data-testid="stOverlay"],
+    div[data-testid="stModal"],
+    div[data-testid="stDialog"]{
+      opacity: 0 !important;
+      background: transparent !important;
+      pointer-events: none !important;
+    }
+
+    /* dialog backdrop (kalau browser bikin) */
+    dialog::backdrop{
+      background: transparent !important;
+    }
+
+    /* tembak fullscreen fixed layer gelap yang kadang nyangkut */
+    body > div[style*="position: fixed"][style*="inset: 0"]{
+      opacity: 0 !important;
+      background: transparent !important;
+      pointer-events: none !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 role = login()
 if role is None:
