@@ -187,3 +187,21 @@ def load_css():
         """,
         unsafe_allow_html=True
     )
+/* =============================
+   ANTI BAYANG GELAP (overlay nyangkut)
+   ============================= */
+
+/* beberapa versi streamlit punya overlay blocker */
+div[data-testid="stOverlay"],
+div[data-testid="stModal"],
+div[data-testid="stDialog"],
+div[role="dialog"] ~ div[aria-hidden="true"]{
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* jaga-jaga ada backdrop global */
+[data-testid="stAppViewContainer"] > div[style*="position: fixed"][style*="inset: 0"]{
+  pointer-events: none !important;
+}
