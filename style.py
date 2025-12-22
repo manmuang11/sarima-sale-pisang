@@ -76,7 +76,7 @@ def load_css():
         }
 
         /* ======================================================
-           LOGIN PAGE (SAFE OVERLAY)  ✅ FIX: button bisa diklik
+           LOGIN PAGE (SAFE OVERLAY)
            ====================================================== */
         .login-wrap{
           position: fixed;
@@ -84,11 +84,10 @@ def load_css():
           display: flex;
           align-items: center;
           justify-content: center;
-
           z-index: 10;
           padding: 18px;
 
-          /* wrapper full-screen JANGAN nangkep klik */
+          /* wrapper full-screen jangan nangkep klik */
           pointer-events: none !important;
         }
 
@@ -115,7 +114,6 @@ def load_css():
           pointer-events: auto !important;
         }
 
-        /* ================= TEXT ================= */
         .login-title{
           text-align: center;
           font-weight: 800;
@@ -138,7 +136,6 @@ def load_css():
           margin-top: 14px;
         }
 
-        /* ================= FORM SPACING ================= */
         .login-card [data-testid="stTextInput"]{
           margin-top: 10px !important;
         }
@@ -152,7 +149,6 @@ def load_css():
           margin-top: 10px !important;
         }
 
-        /* ================= FULL BUTTON ================= */
         .login-card .stButton > button{
           width: 100% !important;
           padding: 0.85rem 1rem !important;
@@ -160,7 +156,6 @@ def load_css():
           font-weight: 800 !important;
         }
 
-        /* PAKSA HILANGIN PILL/DEKOR NYASAR DI LOGIN */
         .login-wrap::before,
         .login-wrap::after,
         .login-card::before,
@@ -169,8 +164,7 @@ def load_css():
           display: none !important;
         }
 
-        /* ===== KILL SWITCH: kalau sidebar muncul (udah login),
-           paksa overlay login hilang total ===== */
+        /* ===== Kill switch: kalau sidebar muncul (udah login), hide login overlay ===== */
         .stApp:has(section[data-testid="stSidebar"]) .login-wrap{
           display: none !important;
           visibility: hidden !important;
@@ -178,8 +172,12 @@ def load_css():
           pointer-events: none !important;
         }
 
-        /* ===== FALLBACK: jaga-jaga browser gak support :has() ===== */
-        .login-wrap{
+        /* ===== Anti “bayang gelap” (overlay nyangkut) ===== */
+        div[data-testid="stOverlay"],
+        div[data-testid="stModal"],
+        div[data-testid="stDialog"],
+        div[role="dialog"]{
+          opacity: 0 !important;
           pointer-events: none !important;
         }
 
@@ -187,21 +185,3 @@ def load_css():
         """,
         unsafe_allow_html=True
     )
-/* =============================
-   ANTI BAYANG GELAP (overlay nyangkut)
-   ============================= */
-
-/* beberapa versi streamlit punya overlay blocker */
-div[data-testid="stOverlay"],
-div[data-testid="stModal"],
-div[data-testid="stDialog"],
-div[role="dialog"] ~ div[aria-hidden="true"]{
-  display: none !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-}
-
-/* jaga-jaga ada backdrop global */
-[data-testid="stAppViewContainer"] > div[style*="position: fixed"][style*="inset: 0"]{
-  pointer-events: none !important;
-}
