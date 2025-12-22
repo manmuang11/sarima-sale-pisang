@@ -39,22 +39,25 @@ def logout_button():
 
 
 def login():
-    # already logged in
+    # kalau sudah login, langsung balik role
     if st.session_state.get("logged_in"):
         return st.session_state.get("role")
 
     users = _get_users()
 
-    # overlay wrapper
-    st.markdown('<div class="login-wrap">', unsafe_allow_html=True)
+    # spacer biar login keliatan di tengah (vertikal)
+    st.markdown("<div style='height:10vh'></div>", unsafe_allow_html=True)
 
-    # center card using columns (ANTI MELEBAR)
+    # layout tengah (AMAN, TANPA overlay)
     left, mid, right = st.columns([1.2, 1, 1.2], gap="large")
     with mid:
         st.markdown('<div class="login-card">', unsafe_allow_html=True)
 
         st.markdown('<div class="login-title">Login</div>', unsafe_allow_html=True)
-        st.markdown('<div class="login-sub">Masuk untuk mengakses dashboard.</div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="login-sub">Masuk untuk mengakses dashboard.</div>',
+            unsafe_allow_html=True
+        )
 
         username = st.text_input("", placeholder="Username (admin / umkm)")
         password = st.text_input("", type="password", placeholder="Password")
@@ -63,16 +66,17 @@ def login():
         do_login = st.button("MASUK", use_container_width=True)
 
         st.markdown(
-            '<div class="login-hint">UMKM hanya melihat hasil. Admin mengelola data dan prediksi.</div>',
+            '<div class="login-hint">'
+            'UMKM hanya melihat hasil. Admin mengelola data dan prediksi.'
+            '</div>',
             unsafe_allow_html=True
         )
 
         st.markdown("</div>", unsafe_allow_html=True)  # end login-card
 
-    st.markdown("</div>", unsafe_allow_html=True)      # end login-wrap
-
     if do_login:
         username_clean = (username or "").strip()
+
         if not username_clean or not password:
             st.warning("Username dan password wajib diisi.")
             return None
@@ -86,6 +90,7 @@ def login():
             st.error("Password salah.")
             return None
 
+        # sukses login
         st.session_state["logged_in"] = True
         st.session_state["username"] = username_clean
         st.session_state["role"] = u.get("role", "umkm")
