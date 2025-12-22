@@ -85,15 +85,14 @@ def load_css():
           align-items: center;
           justify-content: center;
 
-          /* jangan ekstrem biar ga nabrak layer Streamlit */
           z-index: 10;
           padding: 18px;
 
-          /* KUNCI: wrapper full-screen JANGAN nangkep klik */
+          /* wrapper full-screen JANGAN nangkep klik */
           pointer-events: none !important;
         }
 
-        /* kunci lebar kolom tengah (tetap rapi kayak punya kamu) */
+        /* kunci lebar kolom tengah */
         .login-wrap div[data-testid="stHorizontalBlock"]{
           justify-content: center !important;
         }
@@ -112,7 +111,7 @@ def load_css():
           padding: 28px 26px 22px;
           position: relative;
 
-          /* KUNCI: yang boleh diklik cuma card + isinya */
+          /* yang boleh diklik cuma card + isinya */
           pointer-events: auto !important;
         }
 
@@ -169,6 +168,21 @@ def load_css():
           content: none !important;
           display: none !important;
         }
+
+        /* ===== KILL SWITCH: kalau sidebar muncul (udah login),
+           paksa overlay login hilang total ===== */
+        .stApp:has(section[data-testid="stSidebar"]) .login-wrap{
+          display: none !important;
+          visibility: hidden !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+        }
+
+        /* ===== FALLBACK: jaga-jaga browser gak support :has() ===== */
+        .login-wrap{
+          pointer-events: none !important;
+        }
+
         </style>
         """,
         unsafe_allow_html=True
