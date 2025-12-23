@@ -7,12 +7,26 @@ import altair as alt
 from sarima_model import fit_sarima_and_forecast
 
 DATA_PATH = Path("data") / "data_umkm.xlsx"
+
+# tetap simpan excel (buat download)
 OUTPUT_PATH = Path("data") / "hasil_prediksi.xlsx"
+# tambah csv (buat dibaca UMKM, lebih ringan)
+PRED_CSV_PATH = Path("data") / "prediksi_sarima.csv"
+
+# PARAM FIX dari Colab (dikunci)
+FIX_STEPS = 12
+FIX_ORDER = (0, 0, 0)
+FIX_SEASONAL_ORDER = (0, 1, 0, 12)
+
+# Patokan skripsi: 1 kg ≈ 2 sisir => 1 sisir ≈ 0.5 kg
+KG_PER_SISIR = 0.5
+
 
 def _load_data_from_repo() -> pd.DataFrame:
     if not DATA_PATH.exists():
         return pd.DataFrame(columns=["tanggal", "nilai"])
     return pd.read_excel(DATA_PATH)
+
 
 def _save_uploaded_file_to_repo(uploaded_file) -> None:
     # simpan upload jadi data/data_umkm.xlsx
@@ -20,9 +34,14 @@ def _save_uploaded_file_to_repo(uploaded_file) -> None:
     with open(DATA_PATH, "wb") as f:
         f.write(uploaded_file.getbuffer())
 
+
 def _save_forecast(forecast_df: pd.DataFrame) -> None:
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    # simpan excel untuk download
     forecast_df.to_excel(OUTPUT_PATH, index=False)
+    # simpan csv untuk dibaca UMKM
+    forecast_df.to_csv(PRED_CSV_PATH, index=False)
+
 
 def _chart_actual(df: pd.DataFrame):
     if df.empty:
@@ -37,7 +56,7 @@ def _chart_actual(df: pd.DataFrame):
         .mark_line()
         .encode(
             x=alt.X("tanggal:T", title="Tanggal"),
-            y=alt.Y("nilai:Q", title="Nilai"),
+            y=alt.Y("nilai:Q", title="Nilai (Sisir)"),
             tooltip=[
                 alt.Tooltip("tanggal:T", title="Tanggal"),
                 alt.Tooltip("nilai:Q", title="Nilai"),
@@ -48,7 +67,12 @@ def _chart_actual(df: pd.DataFrame):
     )
     return c
 
+
 def _chart_forecast(actual_df: pd.DataFrame, forecast_df: pd.DataFrame):
+    """
+    Chart aktual vs prediksi sisir.
+    forecast_df (baru) pakai kolom: pred_sisir
+    """
     if actual_df.empty or forecast_df.empty:
         return None
 
@@ -60,7 +84,10 @@ def _chart_forecast(actual_df: pd.DataFrame, forecast_df: pd.DataFrame):
     a = a.dropna()
 
     f["tanggal"] = pd.to_datetime(f["tanggal"])
-    f["prediksi"] = pd.to_numeric(f["prediksi"], errors="coerce")
+    # output baru: pred_sisir
+    if "pred_sisir" not in f.columns:
+        return None
+    f["pred_sisir"] = pd.to_numeric(f["pred_sisir"], errors="coerce")
     f = f.dropna()
 
     c1 = (
@@ -68,10 +95,10 @@ def _chart_forecast(actual_df: pd.DataFrame, forecast_df: pd.DataFrame):
         .mark_line()
         .encode(
             x=alt.X("tanggal:T", title="Tanggal"),
-            y=alt.Y("nilai:Q", title="Nilai"),
+            y=alt.Y("nilai:Q", title="Sisir"),
             tooltip=[
                 alt.Tooltip("tanggal:T", title="Tanggal"),
-                alt.Tooltip("nilai:Q", title="Aktual"),
+                alt.Tooltip("nilai:Q", title="Aktual (sisir)"),
             ],
         )
     )
@@ -81,19 +108,20 @@ def _chart_forecast(actual_df: pd.DataFrame, forecast_df: pd.DataFrame):
         .mark_line(strokeDash=[6, 4])
         .encode(
             x="tanggal:T",
-            y=alt.Y("prediksi:Q", title="Nilai / Prediksi"),
+            y=alt.Y("pred_sisir:Q", title="Sisir / Prediksi"),
             tooltip=[
                 alt.Tooltip("tanggal:T", title="Tanggal"),
-                alt.Tooltip("prediksi:Q", title="Prediksi"),
+                alt.Tooltip("pred_sisir:Q", title="Prediksi (sisir)"),
             ],
         )
     )
 
     return (c1 + c2).properties(height=340).interactive()
 
+
 def admin_page():
     st.markdown("## 🛠️ Dashboard Admin")
-    st.caption("Kelola data & jalankan prediksi SARIMA")
+    st.caption("Kelola data & jalankan prediksi SARIMA (fix dari Colab)")
 
     tab1, tab2 = st.tabs(["📦 Data", "📈 Prediksi"])
 
@@ -134,55 +162,64 @@ def admin_page():
             st.warning("Data masih kosong. Upload dulu di tab Data.")
             st.stop()
 
-        with st.expander("⚙️ Pengaturan Model (boleh default dulu)"):
-            steps = st.number_input("Prediksi berapa bulan ke depan?", min_value=1, max_value=36, value=6)
-            order_p = st.number_input("p", 0, 5, 1)
-            order_d = st.number_input("d", 0, 2, 1)
-            order_q = st.number_input("q", 0, 5, 1)
-
-            sp = st.number_input("Seasonal period (bulanan=12)", min_value=1, max_value=24, value=12)
-
-            sp_p = st.number_input("P", 0, 5, 1)
-            sp_d = st.number_input("D", 0, 2, 1)
-            sp_q = st.number_input("Q", 0, 5, 1)
+        # INFO: param sudah dikunci
+        st.info(
+            f"Model dikunci sesuai Colab:\n"
+            f"- order={FIX_ORDER}\n"
+            f"- seasonal_order={FIX_SEASONAL_ORDER}\n"
+            f"- prediksi {FIX_STEPS} bulan\n"
+            f"Konversi skripsi: 1 sisir ≈ {KG_PER_SISIR} kg (1 kg ≈ 2 sisir)"
+        )
 
         run = st.button("🚀 Jalankan SARIMA", use_container_width=True)
 
         if run:
-            with st.spinner("Melatih model & membuat prediksi..."):
-                actual_df, forecast_df, summary_text = fit_sarima_and_forecast(
-                    df=df,
-                    steps=int(steps),
-                    order=(int(order_p), int(order_d), int(order_q)),
-                    seasonal_order=(int(sp_p), int(sp_d), int(sp_q), int(sp)),
+            try:
+                with st.spinner("Melatih model & membuat prediksi..."):
+                    actual_df, forecast_df, summary_text = fit_sarima_and_forecast(
+                        df=df,
+                        steps=int(FIX_STEPS),
+                        order=FIX_ORDER,
+                        seasonal_order=FIX_SEASONAL_ORDER,
+                        kg_per_sisir=float(KG_PER_SISIR),
+                    )
+
+                    _save_forecast(forecast_df)
+
+                st.success("Prediksi berhasil dibuat & disimpan.")
+                st.write(f"Hasil Excel: `{OUTPUT_PATH.as_posix()}`")
+                st.write(f"Hasil CSV (dibaca UMKM): `{PRED_CSV_PATH.as_posix()}`")
+
+                st.markdown("#### Grafik Aktual vs Prediksi (Sisir)")
+                chart2 = _chart_forecast(actual_df, forecast_df)
+                if chart2 is not None:
+                    st.altair_chart(chart2, use_container_width=True)
+                else:
+                    st.info("Chart prediksi belum bisa tampil (cek kolom output forecast).")
+
+                st.markdown("#### Tabel Prediksi (kg & sisir + min/maks)")
+                st.dataframe(forecast_df, use_container_width=True)
+
+                st.download_button(
+                    "⬇️ Download hasil_prediksi.xlsx",
+                    data=OUTPUT_PATH.read_bytes() if OUTPUT_PATH.exists() else b"",
+                    file_name="hasil_prediksi.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 )
 
-                _save_forecast(forecast_df)
+                with st.expander("📄 Ringkasan Model (summary)"):
+                    st.text(summary_text)
 
-            st.success("Prediksi berhasil dibuat & disimpan.")
-            st.write(f"Hasil disimpan ke: `{OUTPUT_PATH.as_posix()}`")
-
-            st.markdown("#### Grafik Aktual vs Prediksi")
-            chart2 = _chart_forecast(actual_df, forecast_df)
-            if chart2 is not None:
-                st.altair_chart(chart2, use_container_width=True)
-
-            st.markdown("#### Tabel Prediksi")
-            st.dataframe(forecast_df, use_container_width=True)
-
-            st.download_button(
-                "⬇️ Download hasil_prediksi.xlsx",
-                data=OUTPUT_PATH.read_bytes() if OUTPUT_PATH.exists() else b"",
-                file_name="hasil_prediksi.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            )
-
-            with st.expander("📄 Ringkasan Model (summary)"):
-                st.text(summary_text)
+            except Exception as e:
+                st.error("❌ Gagal menjalankan SARIMA.")
+                st.exception(e)
 
         else:
             # kalau belum klik, tapi hasil prediksi sudah ada dari sebelumnya
             if OUTPUT_PATH.exists():
-                st.info("Ada hasil prediksi sebelumnya. UMKM bisa lihat dari file hasil_prediksi.xlsx.")
-                prev = pd.read_excel(OUTPUT_PATH)
-                st.dataframe(prev, use_container_width=True)
+                st.info("Ada hasil prediksi sebelumnya. UMKM bisa lihat dari file prediksi_sarima.csv / hasil_prediksi.xlsx.")
+                try:
+                    prev = pd.read_excel(OUTPUT_PATH)
+                    st.dataframe(prev, use_container_width=True)
+                except Exception:
+                    st.warning("File hasil_prediksi.xlsx tidak bisa dibaca. Coba jalankan ulang prediksi.")
