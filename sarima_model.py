@@ -59,7 +59,6 @@ def fit_sarima_and_forecast(
     mean = fc.predicted_mean
     ci = fc.conf_int()
 
-    # index forecast mengikuti mean index (paling aman)
     idx_forecast = mean.index
 
     forecast_df = pd.DataFrame({
@@ -74,5 +73,5 @@ def fit_sarima_and_forecast(
     forecast_df["up_kg"]   = forecast_df["up_sisir"]   * kg_per_sisir
 
     df_ts = df2.reset_index().rename(columns={value_col: "nilai"})
-
     return df_ts, forecast_df, str(res.summary())
+
