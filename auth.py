@@ -45,10 +45,10 @@ def login():
 
     users = _get_users()
 
-    # spacer biar login keliatan di tengah (vertikal)
+    # spacer biar login keliatan di tengah
     st.markdown("<div style='height:10vh'></div>", unsafe_allow_html=True)
 
-    # layout tengah (AMAN, TANPA overlay)
+    # layout tengah
     left, mid, right = st.columns([1.2, 1, 1.2], gap="large")
     with mid:
         st.markdown('<div class="login-card">', unsafe_allow_html=True)
@@ -59,8 +59,20 @@ def login():
             unsafe_allow_html=True
         )
 
-        username = st.text_input("", placeholder="Username (admin / umkm)")
-        password = st.text_input("", type="password", placeholder="Password")
+        # ✅ label tidak kosong tapi disembunyikan (anti-warning)
+        username = st.text_input(
+            "Username",
+            placeholder="Username (admin / umkm)",
+            label_visibility="collapsed",
+            key="login_username",
+        )
+        password = st.text_input(
+            "Password",
+            type="password",
+            placeholder="Password",
+            label_visibility="collapsed",
+            key="login_password",
+        )
 
         remember = st.checkbox("Ingat saya", value=False)
         do_login = st.button("MASUK", use_container_width=True)
@@ -90,7 +102,7 @@ def login():
             st.error("Password salah.")
             return None
 
-        # sukses login
+        # ✅ sukses login
         st.session_state["logged_in"] = True
         st.session_state["username"] = username_clean
         st.session_state["role"] = u.get("role", "umkm")
