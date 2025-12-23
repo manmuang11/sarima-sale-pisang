@@ -1,4 +1,4 @@
-# admin.py (DEBUG)
+# admin.py (DEBUG - FIX CLICK)
 from pathlib import Path
 import os
 import pandas as pd
@@ -62,10 +62,11 @@ def _chart_actual(df: pd.DataFrame):
 
 def admin_page():
     st.markdown("## 🛠️ Dashboard Admin")
-    st.caption("DEBUG mode: biar ketahuan kenapa SARIMA nggak jalan")
+    st.caption("DEBUG mode: fix klik + tampilkan error SARIMA asli di layar")
 
     tab1, tab2 = st.tabs(["📦 Data", "📈 Prediksi"])
 
+    # ---------------- TAB DATA ----------------
     with tab1:
         st.markdown("### Data Historis (Excel)")
         st.write(f"File data aktif: `{DATA_PATH.as_posix()}`")
@@ -89,6 +90,7 @@ def admin_page():
         Path("data").mkdir(parents=True, exist_ok=True)
         st.code("\n".join(sorted(os.listdir("data"))) if os.path.exists("data") else "(folder data tidak ada)")
 
+    # ---------------- TAB PREDIKSI ----------------
     with tab2:
         st.markdown("### Prediksi SARIMA (Fix)")
         st.info(
@@ -96,7 +98,7 @@ def admin_page():
             f"Konversi: 1 sisir ≈ {KG_PER_SISIR} kg"
         )
 
-        # cek dependency biar jelas
+        # ✅ cek dependency biar jelas
         st.markdown("#### DEBUG: cek dependencies")
         try:
             import statsmodels  # noqa
@@ -123,10 +125,23 @@ def admin_page():
             st.error("❌ Excel kamu belum punya kolom persis: 'tanggal' dan 'nilai'")
             st.stop()
 
-        run = st.button("🚀 Jalankan SARIMA", use_container_width=True)
+        # ✅ indikator status file
+        st.caption(
+            f"Status file prediksi_sarima.csv: "
+            f"{'ADA ✅' if PRED_CSV_PATH.exists() else 'BELUM ❌'}"
+        )
 
-        if run:
-            st.warning("🔔 Tombol kepencet. Mulai proses...")  # BUKTI tombol jalan
+        # ✅ pastiin klik ke-detect (pakai form + session flag)
+        def _mark_clicked():
+            st.session_state["sarima_clicked"] = True
+
+        st.write("DEBUG: sarima_clicked =", st.session_state.get("sarima_clicked", False))
+
+        with st.form("run_sarima_form", clear_on_submit=False):
+            submitted = st.form_submit_button("🚀 Jalankan SARIMA", on_click=_mark_clicked)
+
+        if submitted:
+            st.warning("🔔 Tombol kepencet. Mulai proses...")  # HARUS MUNCUL KALAU KLIK KEDETECT
 
             try:
                 with st.spinner("Melatih model & membuat prediksi..."):
@@ -139,7 +154,6 @@ def admin_page():
                         seasonal_order=FIX_SEASONAL_ORDER,
                         kg_per_sisir=float(KG_PER_SISIR),
                     )
-
                     _save_forecast(forecast_df)
 
                 st.success("✅ SARIMA selesai & file tersimpan!")
@@ -158,9 +172,3 @@ def admin_page():
 
             st.markdown("#### DEBUG: isi folder `data/` setelah run")
             st.code("\n".join(sorted(os.listdir("data"))) if os.path.exists("data") else "(folder data tidak ada)")
-
-        else:
-            st.caption(
-                f"Status file prediksi_sarima.csv: "
-                f"{'ADA ✅' if PRED_CSV_PATH.exists() else 'BELUM ❌'}"
-            )
