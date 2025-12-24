@@ -1,15 +1,9 @@
 # auth.py
 import streamlit as st
 import hashlib
-import base64
-from pathlib import Path
-
-LOGO_PATH = Path("assets") / "logo.png"
-
 
 def _hash(pw: str) -> str:
     return hashlib.sha256(pw.encode("utf-8")).hexdigest()
-
 
 def _get_users():
     # support Streamlit Cloud secrets.toml
@@ -22,91 +16,48 @@ def _get_users():
         "umkm": {"password_hash": _hash("umkm123"), "role": "umkm"},
     }
 
-
-def _logo_base64(path: Path) -> str | None:
-    try:
-        if path.exists():
-            return base64.b64encode(path.read_bytes()).decode("utf-8")
-    except Exception:
-        pass
-    return None
-
-
-def logout_button():
-    if st.button("Logout", use_container_width=True):
-        st.session_state.clear()
-        st.rerun()
-
-
 def login():
-    # kalau sudah login, langsung balik role
-    if st.session_state.get("logged_in"):
+    # kalau sudah login, BALIKIN role dan JANGAN render overlay login
+    if st.session_state.get("logged_in", False):
         return st.session_state.get("role")
 
     users = _get_users()
 
-    # spacer biar login keliatan di tengah
-    st.markdown("<div style='height:10vh'></div>", unsafe_allow_html=True)
+    # ==== RENDER LOGIN OVERLAY (HANYA DI SINI) ====
+    st.markdown('<div class="login-wrap is-active">', unsafe_allow_html=True)
 
-    # layout tengah
-    left, mid, right = st.columns([1.2, 1, 1.2], gap="large")
-    with mid:
+    # bikin 3 kolom biar card di tengah
+    c1, c2, c3 = st.columns([1, 1.2, 1])
+    with c2:
         st.markdown('<div class="login-card">', unsafe_allow_html=True)
-
         st.markdown('<div class="login-title">Login</div>', unsafe_allow_html=True)
-        st.markdown(
-            '<div class="login-sub">Masuk untuk mengakses dashboard.</div>',
-            unsafe_allow_html=True
-        )
+        st.markdown('<div class="login-sub">Masuk untuk mengakses dashboard</div>', unsafe_allow_html=True)
 
-        # ✅ label tidak kosong tapi disembunyikan (anti-warning)
-        username = st.text_input(
-            "Username",
-            placeholder="Username (admin / umkm)",
-            label_visibility="collapsed",
-            key="login_username",
-        )
-        password = st.text_input(
-            "Password",
-            type="password",
-            placeholder="Password",
-            label_visibility="collapsed",
-            key="login_password",
-        )
+        username = st.text_input("Username", key="login_username")
+        password = st.text_input("Password", type="password", key="login_password")
 
-        remember = st.checkbox("Ingat saya", value=False)
-        do_login = st.button("MASUK", use_container_width=True)
+        if st.button("Masuk", key="login_btn"):
+            u = (username or "").strip()
+            pw = password or ""
+            if u in users and users[u]["password_hash"] == _hash(pw):
+                st.session_state.logged_in = True
+                st.session_state.role = users[u]["role"]
+                st.success("✅ Login berhasil")
+                st.rerun()
+            else:
+                st.error("❌ Username / password salah")
 
-        st.markdown(
-            '<div class="login-hint">'
-            'UMKM hanya melihat hasil. Admin mengelola data dan prediksi.'
-            '</div>',
-            unsafe_allow_html=True
-        )
+        st.markdown('<div class="login-hint">Gunakan akun yang tersedia (admin / umkm).</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-        st.markdown("</div>", unsafe_allow_html=True)  # end login-card
-
-    if do_login:
-        username_clean = (username or "").strip()
-
-        if not username_clean or not password:
-            st.warning("Username dan password wajib diisi.")
-            return None
-
-        u = users.get(username_clean)
-        if not u:
-            st.error("Username tidak ditemukan.")
-            return None
-
-        if _hash(password) != u.get("password_hash", ""):
-            st.error("Password salah.")
-            return None
-
-        # ✅ sukses login
-        st.session_state["logged_in"] = True
-        st.session_state["username"] = username_clean
-        st.session_state["role"] = u.get("role", "umkm")
-        st.session_state["remember"] = remember
-        st.rerun()
-
+    st.markdown("</div>", unsafe_allow_html=True)
     return None
+
+def logout_button():
+    if st.button("Logout", key="logout_btn"):
+        st.session_state.logged_in = False
+        st.session_state.role = None
+        # optional: bersihin input
+        st.session_state.pop("login_username", None)
+        st.session_state.pop("login_password", None)
+        st.rerun()
