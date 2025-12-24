@@ -35,7 +35,7 @@ def load_css():
         /* Hide default header */
         header[data-testid="stHeader"]{display:none;}
 
-        /* Jangan bikin page super lebar */
+        /* Layout width */
         div.block-container{
           padding-top: 0 !important;
           padding-bottom: 0 !important;
@@ -76,27 +76,31 @@ def load_css():
         }
 
         /* ======================================================
-           LOGIN PAGE (overlay center) — AMAN DIKLIK
+           LOGIN OVERLAY (FIX UTAMA)
+           Default: MATI (biar gak nutup page setelah login)
+           Aktif hanya saat class .is-active dipakai di auth.py
            ====================================================== */
         .login-wrap{
           position: fixed;
           inset: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-
-          /* taro di atas konten */
           z-index: 10000;
           padding: 18px;
 
-          /* IMPORTANT: login harus bisa diklik */
-          pointer-events: auto !important;
+          /* FIX PENTING */
+          display: none !important;
+          pointer-events: none !important;
 
-          /* jangan bikin layar gelap */
           background: transparent !important;
+          align-items: center;
+          justify-content: center;
         }
 
-        /* kunci lebar kolom tengah (tetap rapi kayak punya kamu) */
+        .login-wrap.is-active{
+          display: flex !important;
+          pointer-events: auto !important;
+        }
+
+        /* center kolom tengah */
         .login-wrap div[data-testid="stHorizontalBlock"]{
           justify-content: center !important;
         }
@@ -114,7 +118,6 @@ def load_css():
           box-shadow: 0 16px 45px rgba(0,0,0,0.10);
           padding: 28px 26px 22px;
           position: relative;
-
           pointer-events: auto !important;
         }
 
@@ -151,11 +154,7 @@ def load_css():
           border-radius: 14px !important;
         }
 
-        .login-card [data-testid="stCheckbox"]{
-          margin-top: 10px !important;
-        }
-
-        /* ================= FULL BUTTON ================= */
+        /* full-width button di login */
         .login-card .stButton > button{
           width: 100% !important;
           padding: 0.85rem 1rem !important;
@@ -163,7 +162,7 @@ def load_css():
           font-weight: 800 !important;
         }
 
-        /* PAKSA HILANGIN PILL/DEKOR NYASAR DI LOGIN */
+        /* bersihin dekor nyasar */
         .login-wrap::before,
         .login-wrap::after,
         .login-card::before,
@@ -172,37 +171,7 @@ def load_css():
           display: none !important;
         }
 
-        /* ======================================================
-           NUKE: overlay gelap / blocker Streamlit yang nyangkut
-           (tetap biarin login-wrap aman)
-           ====================================================== */
-
-        /* overlay internal streamlit (variasi versi) */
-        div[data-testid="stOverlay"],
-        div[data-testid="stModal"],
-        div[data-testid="stDialog"]{
-          opacity: 0 !important;
-          pointer-events: none !important;
-          background: transparent !important;
-        }
-
-        /* tembak fullscreen fixed overlay "misterius" (kecuali login-wrap) */
-        div[style*="position: fixed"][style*="inset: 0"]:not(.login-wrap),
-        div[style*="position: fixed"][style*="top: 0"][style*="left: 0"][style*="right: 0"][style*="bottom: 0"]:not(.login-wrap){
-          opacity: 0 !important;
-          pointer-events: none !important;
-          background: transparent !important;
-        }
-
-        /* ===== Kill switch: kalau sidebar muncul (udah login), hilangin login-wrap ===== */
-        .stApp:has(section[data-testid="stSidebar"]) .login-wrap{
-          display: none !important;
-          visibility: hidden !important;
-          opacity: 0 !important;
-          pointer-events: none !important;
-        }
-
         </style>
         """,
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
