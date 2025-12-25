@@ -137,3 +137,18 @@ def load_css():
         """,
         unsafe_allow_html=True,
     )
+/* ================= ABSOLUTE CLICK FIX ================= */
+/* MATIKAN SEMUA FIXED / OVERLAY YANG BISA NANGKEP KLIK */
+*[style*="position: fixed"]{
+  pointer-events: none !important;
+}
+
+/* KECUALI tombol & input streamlit */
+button, input, textarea, select{
+  pointer-events: auto !important;
+}
+
+/* pastikan area utama bisa diklik */
+div[data-testid="stAppViewContainer"]{
+  pointer-events: auto !important;
+}
