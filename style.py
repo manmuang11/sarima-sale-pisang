@@ -22,7 +22,6 @@ def load_css():
           font-family: "Plus Jakarta Sans", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
         }
 
-        /* ================= BACKGROUND ================= */
         .stApp{
           background: radial-gradient(
             1200px 700px at 50% 8%,
@@ -32,17 +31,14 @@ def load_css():
           );
         }
 
-        /* Hide default header */
         header[data-testid="stHeader"]{display:none;}
 
-        /* Layout width */
         div.block-container{
           padding-top: 0 !important;
           padding-bottom: 0 !important;
           max-width: 1200px !important;
         }
 
-        /* ================= BUTTONS ================= */
         .stButton > button{
           background: var(--yellow);
           color: #1f1f1f;
@@ -57,11 +53,8 @@ def load_css():
           transform: translateY(-1px);
           filter: brightness(0.98);
         }
-        .stButton > button:disabled{
-          opacity: 0.55;
-        }
+        .stButton > button:disabled{ opacity: 0.55; }
 
-        /* ================= INPUTS ================= */
         .stTextInput input,
         .stSelectbox div[data-baseweb="select"] > div{
           border-radius: 14px !important;
@@ -69,28 +62,23 @@ def load_css():
           background: #fff !important;
         }
 
-        /* ================= SIDEBAR ================= */
         section[data-testid="stSidebar"]{
           background: #fff;
           border-right: 1px solid var(--border);
         }
 
-        /* ======================================================
-           LOGIN OVERLAY (FIX UTAMA)
-           Default: MATI (biar gak nutup page setelah login)
-           Aktif hanya saat class .is-active dipakai di auth.py
-           ====================================================== */
+        /* ================= LOGIN OVERLAY ================= */
         .login-wrap{
           position: fixed;
           inset: 0;
           z-index: 10000;
           padding: 18px;
+          background: transparent !important;
 
-          /* FIX PENTING */
+          /* default mati */
           display: none !important;
           pointer-events: none !important;
 
-          background: transparent !important;
           align-items: center;
           justify-content: center;
         }
@@ -98,17 +86,6 @@ def load_css():
         .login-wrap.is-active{
           display: flex !important;
           pointer-events: auto !important;
-        }
-
-        /* center kolom tengah */
-        .login-wrap div[data-testid="stHorizontalBlock"]{
-          justify-content: center !important;
-        }
-        .login-wrap
-        div[data-testid="stHorizontalBlock"]
-        > div[data-testid="column"]:nth-child(2){
-          max-width: 420px !important;
-          flex: 0 0 420px !important;
         }
 
         .login-card{
@@ -121,7 +98,6 @@ def load_css():
           pointer-events: auto !important;
         }
 
-        /* ================= TEXT ================= */
         .login-title{
           text-align: center;
           font-weight: 800;
@@ -129,32 +105,18 @@ def load_css():
           margin: 0 0 4px 0;
           color: var(--text);
         }
-
         .login-sub{
           text-align: center;
           color: var(--muted);
           font-size: 14px;
           margin-bottom: 18px;
         }
-
         .login-hint{
           text-align: center;
           font-size: 12.5px;
           color: var(--muted);
           margin-top: 14px;
         }
-
-        /* ================= FORM SPACING ================= */
-        .login-card [data-testid="stTextInput"]{
-          margin-top: 10px !important;
-        }
-
-        .login-card input{
-          height: 46px !important;
-          border-radius: 14px !important;
-        }
-
-        /* full-width button di login */
         .login-card .stButton > button{
           width: 100% !important;
           padding: 0.85rem 1rem !important;
@@ -162,13 +124,13 @@ def load_css():
           font-weight: 800 !important;
         }
 
-        /* bersihin dekor nyasar */
-        .login-wrap::before,
-        .login-wrap::after,
-        .login-card::before,
-        .login-card::after{
-          content: none !important;
+        /* ===== KILL SWITCH (WAJIB) =====
+           Kalau ada login-wrap nyangkut karena bug render,
+           paksa dia GAK PERNAH bisa nangkep klik setelah login.
+        */
+        section[data-testid="stSidebar"] ~ div .login-wrap{
           display: none !important;
+          pointer-events: none !important;
         }
 
         </style>
