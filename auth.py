@@ -19,30 +19,24 @@ def login():
 
     users = _get_users()
 
-    st.markdown('<div class="login-wrap is-active">', unsafe_allow_html=True)
-    c1, c2, c3 = st.columns([1, 1.2, 1])
-    with c2:
-        st.markdown('<div class="login-card">', unsafe_allow_html=True)
-        st.markdown('<div class="login-title">Login</div>', unsafe_allow_html=True)
-        st.markdown('<div class="login-sub">Masuk untuk mengakses dashboard</div>', unsafe_allow_html=True)
+    st.markdown('<div class="login-page"><div class="login-card">', unsafe_allow_html=True)
+    st.markdown('<div class="login-title">Login</div>', unsafe_allow_html=True)
+    st.markdown('<div class="login-sub">Masuk untuk mengakses dashboard</div>', unsafe_allow_html=True)
 
-        username = st.text_input("Username", key="login_username")
-        password = st.text_input("Password", type="password", key="login_password")
+    username = st.text_input("Username", key="login_username")
+    password = st.text_input("Password", type="password", key="login_password")
 
-        if st.button("Masuk", key="login_btn"):
-            u = (username or "").strip()
-            pw = password or ""
-            if u in users and users[u]["password_hash"] == _hash(pw):
-                st.session_state.logged_in = True
-                st.session_state.role = users[u]["role"]
-                st.rerun()
-            else:
-                st.error("❌ Username / password salah")
+    if st.button("Masuk", key="login_btn"):
+        u = (username or "").strip()
+        pw = password or ""
+        if u in users and users[u]["password_hash"] == _hash(pw):
+            st.session_state.logged_in = True
+            st.session_state.role = users[u]["role"]
+            st.rerun()
+        else:
+            st.error("❌ Username / password salah")
 
-        st.markdown('<div class="login-hint">Gunakan akun admin / umkm</div>', unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("</div></div>", unsafe_allow_html=True)
     return None
 
 def logout_button():
