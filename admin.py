@@ -1,4 +1,4 @@
-# admin.py
+# admin.py (FINAL - BUTTON TRUE, NO on_click/session_flag)
 from pathlib import Path
 import os
 import pandas as pd
@@ -54,8 +54,10 @@ def _chart_actual(df: pd.DataFrame):
         .encode(
             x=alt.X("tanggal:T", title="Tanggal"),
             y=alt.Y("nilai:Q", title="Nilai (Sisir)"),
-            tooltip=[alt.Tooltip("tanggal:T", title="Tanggal"),
-                     alt.Tooltip("nilai:Q", title="Nilai (sisir)")]
+            tooltip=[
+                alt.Tooltip("tanggal:T", title="Tanggal"),
+                alt.Tooltip("nilai:Q", title="Nilai (sisir)"),
+            ],
         )
         .properties(height=320)
         .interactive()
@@ -66,8 +68,11 @@ def admin_page():
     st.markdown("## 🛠️ Dashboard Admin")
     tab1, tab2 = st.tabs(["📦 Data", "📈 Prediksi"])
 
+    # ---------------- TAB DATA ----------------
     with tab1:
         st.markdown("### Data Historis (Excel)")
+        st.write(f"File data aktif: `{DATA_PATH.as_posix()}`")
+
         uploaded = st.file_uploader("Upload data Excel (kolom: tanggal, nilai)", type=["xlsx"])
         if uploaded is not None:
             _save_uploaded_file_to_repo(uploaded)
@@ -83,10 +88,11 @@ def admin_page():
             st.altair_chart(chart, use_container_width=True)
 
         st.divider()
-        Path("data").mkdir(parents=True, exist_ok=True)
         st.markdown("#### DEBUG: isi folder `data/`")
-        st.code("\n".join(sorted(os.listdir("data"))))
+        Path("data").mkdir(parents=True, exist_ok=True)
+        st.code("\n".join(sorted(os.listdir("data"))) if os.path.exists("data") else "(folder data tidak ada)")
 
+    # ---------------- TAB PREDIKSI ----------------
     with tab2:
         st.markdown("### Prediksi SARIMA")
         st.info(
@@ -94,7 +100,7 @@ def admin_page():
             f"Konversi: 1 sisir ≈ {KG_PER_SISIR} kg"
         )
 
-        # cek dependency
+        # dependency check
         try:
             import statsmodels  # noqa
             st.success("✅ statsmodels OK")
@@ -127,17 +133,24 @@ def admin_page():
             f"{'ADA ✅' if PRED_CSV_PATH.exists() else 'BELUM ❌'}"
         )
 
-        # ====== TOMBOL RUN (SIMPLE, NO FORM) ======
-        if "run_sarima" not in st.session_state:
-            st.session_state.run_sarima = False
+        # =====================
+        # 1) TEST KLIK (HARUS TRUE)
+        # =====================
+        st.markdown("### 🧪 Test Klik")
+        test_clicked = st.button("🧪 TEST KLIK (harus muncul sukses)", key="test_click_btn")
+        st.write("DEBUG test_clicked =", test_clicked)
+        if test_clicked:
+            st.success("✅ KLIK MASUK KE PYTHON (berarti tombol berfungsi)")
 
-        def _start_run():
-            st.session_state.run_sarima = True
+        st.divider()
 
-        st.button("🚀 Jalankan SARIMA", key="btn_run_sarima", on_click=_start_run)
-        st.write("DEBUG: run_sarima =", st.session_state.run_sarima)
+        # =====================
+        # 2) RUN SARIMA (PAKAI TRUE DARI st.button)
+        # =====================
+        run_clicked = st.button("🚀 Jalankan SARIMA", key="run_sarima_btn")
+        st.write("DEBUG run_clicked =", run_clicked)
 
-        if st.session_state.run_sarima:
+        if run_clicked:
             st.warning("🔔 Tombol kepencet. Mulai proses...")
 
             try:
@@ -156,6 +169,22 @@ def admin_page():
                 st.success("✅ SARIMA selesai & file tersimpan!")
                 st.dataframe(forecast_df, use_container_width=True)
 
+                # download buttons (biar gampang)
+                if PRED_CSV_PATH.exists():
+                    st.download_button(
+                        "⬇️ Download prediksi_sarima.csv",
+                        data=PRED_CSV_PATH.read_bytes(),
+                        file_name="prediksi_sarima.csv",
+                        mime="text/csv",
+                    )
+                if OUTPUT_PATH.exists():
+                    st.download_button(
+                        "⬇️ Download hasil_prediksi.xlsx",
+                        data=OUTPUT_PATH.read_bytes(),
+                        file_name="hasil_prediksi.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    )
+
                 with st.expander("Summary model"):
                     st.text(summary_text)
 
@@ -163,4 +192,5 @@ def admin_page():
                 st.error("❌ SARIMA gagal. Ini error aslinya:")
                 st.exception(e)
 
-            st.session_state.run_sarima = False  # reset biar gak loop
+            st.markdown("#### DEBUG: isi folder `data/` setelah run")
+            st.code("\n".join(sorted(os.listdir("data"))) if os.path.exists("data") else "(folder data tidak ada)")
