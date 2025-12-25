@@ -1,77 +1,56 @@
-# sarima_model.py
-import warnings
 import pandas as pd
 from statsmodels.tsa.statespace.sarimax import SARIMAX
-
-# Patokan skripsi: 1 kg ≈ 2 sisir => 1 sisir ≈ 0.5 kg
-DEFAULT_KG_PER_SISIR = 0.5
-
-# Param fix dari colab kamu
-DEFAULT_ORDER = (0, 0, 0)
-DEFAULT_SEASONAL_ORDER = (0, 1, 0, 12)
 
 def fit_sarima_and_forecast(
     df: pd.DataFrame,
     date_col: str = "tanggal",
     value_col: str = "nilai",
     steps: int = 12,
-    order=DEFAULT_ORDER,
-    seasonal_order=DEFAULT_SEASONAL_ORDER,
-    kg_per_sisir: float = DEFAULT_KG_PER_SISIR,
+    order=(0, 0, 0),
+    seasonal_order=(0, 1, 0, 12),
+    kg_per_sisir: float = 0.5,
+    freq: str = "MS",
 ):
-    """
-    Input df harus punya kolom tanggal & nilai (nilai = sisir/bulan).
-    Output:
-      - df_ts: data historis (tanggal, nilai) bulanan (MS)
-      - forecast_df: prediksi ke depan (tanggal, pred_sisir, low_sisir, up_sisir, pred_kg, low_kg, up_kg)
-      - model_summary: ringkasan model (string)
-    """
+    df = df.copy()
+
     if date_col not in df.columns or value_col not in df.columns:
-        raise ValueError(f"Kolom harus ada: '{date_col}' dan '{value_col}'")
+        raise ValueError(f"Kolom wajib ada: '{date_col}' dan '{value_col}'")
 
-    df2 = df[[date_col, value_col]].copy()
-    df2[date_col] = pd.to_datetime(df2[date_col], errors="coerce")
-    df2 = df2.dropna(subset=[date_col, value_col])
+    df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
+    df[value_col] = pd.to_numeric(df[value_col], errors="coerce")
+    df = df.dropna(subset=[date_col, value_col]).sort_values(date_col)
 
-    df2[value_col] = pd.to_numeric(df2[value_col], errors="coerce")
-    df2 = df2.dropna(subset=[value_col])
+    if len(df) < 24:
+        raise ValueError(f"Data terlalu sedikit untuk seasonal 12. Minimal ~24 baris, sekarang {len(df)}.")
 
-    df2 = df2.sort_values(date_col).set_index(date_col)
-    df2 = df2.asfreq("MS")  # Month Start
+    # normalisasi tanggal ke awal bulan supaya asfreq MS gak bikin bolong parah
+    df[date_col] = df[date_col].dt.to_period("M").dt.to_timestamp("MS")
 
-    if df2[value_col].isna().any():
-        df2[value_col] = df2[value_col].interpolate(method="time")
-
-    y = df2[value_col]
-
-    warnings.filterwarnings("ignore")
+    ts = df.set_index(date_col)[value_col].asfreq(freq)
+    ts = ts.interpolate(limit_direction="both")
 
     model = SARIMAX(
-        y,
+        ts,
         order=order,
         seasonal_order=seasonal_order,
         enforce_stationarity=False,
         enforce_invertibility=False,
     )
-    res = model.fit(disp=False)
+
+    # penting: batasi iterasi + pakai method yang "selesai"
+    res = model.fit(disp=False, maxiter=80, method="powell")
 
     fc = res.get_forecast(steps=steps)
-    mean = fc.predicted_mean
-    ci = fc.conf_int()
+    pred = fc.predicted_mean
 
-    idx_forecast = mean.index
+    forecast_df = pred.reset_index()
+    forecast_df.columns = [date_col, "prediksi_sisir"]
+    forecast_df["prediksi_kg"] = forecast_df["prediksi_sisir"] * float(kg_per_sisir)
 
-    forecast_df = pd.DataFrame({
-        "tanggal": idx_forecast,
-        "pred_sisir": mean.values,
-        "low_sisir": ci.iloc[:, 0].values,
-        "up_sisir":  ci.iloc[:, 1].values,
-    })
+    actual_df = ts.reset_index()
+    actual_df.columns = [date_col, "aktual_sisir"]
+    actual_df["aktual_kg"] = actual_df["aktual_sisir"] * float(kg_per_sisir)
 
-    forecast_df["pred_kg"] = forecast_df["pred_sisir"] * kg_per_sisir
-    forecast_df["low_kg"]  = forecast_df["low_sisir"]  * kg_per_sisir
-    forecast_df["up_kg"]   = forecast_df["up_sisir"]   * kg_per_sisir
+    summary_text = str(res.summary())
 
-    df_ts = df2.reset_index().rename(columns={value_col: "nilai"})
-    return df_ts, forecast_df, str(res.summary())
-
+    return actual_df, forecast_df, summary_text
