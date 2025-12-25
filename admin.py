@@ -1,9 +1,10 @@
-# admin.py (FULL - APP VERSION + CLICK COUNTER + RUN SARIMA)
+# admin.py (FULL - JS_CLICK + CLICK COUNT + RUN SARIMA)
 from pathlib import Path
 import os
 import pandas as pd
 import streamlit as st
 import altair as alt
+import streamlit.components.v1 as components
 
 from sarima_model import fit_sarima_and_forecast
 
@@ -94,9 +95,28 @@ def admin_page():
 
     # ---------------- TAB PREDIKSI ----------------
     with tab2:
-        # ========= BUILD CHECK (WAJIB MUNCUL) =========
-        st.write("APP VERSION:", "v2025-12-25-CLICK-COUNTER")
-        st.write("BUILD CHECK: kalau ini gak muncul, berarti deploy belum ke-update")
+        # ========= TES KLIK VIA JS (TIDAK LEWAT STREAMLIT) =========
+        components.html(
+            """
+            <div style="position:fixed;bottom:16px;right:16px;z-index:999999;
+                        background:#111;color:#fff;padding:10px 12px;border-radius:10px;
+                        font-family:monospace;">
+              JS_CLICK: <span id="c">0</span>
+            </div>
+            <script>
+              let c = 0;
+              document.addEventListener('click', () => {
+                c++;
+                const el = document.getElementById('c');
+                if (el) el.textContent = c;
+              }, true);
+            </script>
+            """,
+            height=0,
+        )
+
+        st.write("APP VERSION:", "v2025-12-25-JSCLICK")
+        st.caption("Kalau JS_CLICK naik tapi CLICK COUNT tetap 0, berarti event Streamlit/websocket ketahan (extension/jaringan).")
 
         st.markdown("### Prediksi SARIMA")
         st.info(
@@ -137,8 +157,8 @@ def admin_page():
             f"{'ADA ✅' if PRED_CSV_PATH.exists() else 'BELUM ❌'}"
         )
 
-        # ========= TEST KLIK PERMANEN =========
-        st.markdown("### 🧪 Test Klik (bukti klik masuk ke Python)")
+        # ========= TEST KLIK STREAMLIT (HARUS NAIK) =========
+        st.markdown("### 🧪 Test Klik Streamlit (CLICK COUNT harus naik)")
         if "click_count" not in st.session_state:
             st.session_state.click_count = 0
 
@@ -149,7 +169,7 @@ def admin_page():
 
         st.divider()
 
-        # ========= RUN SARIMA (TRUE dari st.button) =========
+        # ========= RUN SARIMA =========
         run_clicked = st.button("🚀 Jalankan SARIMA", key="btn_run_sarima_true")
         st.write("DEBUG run_clicked =", run_clicked)
 
@@ -172,7 +192,6 @@ def admin_page():
                 st.success("✅ SARIMA selesai & file tersimpan!")
                 st.dataframe(forecast_df, use_container_width=True)
 
-                # download buttons
                 if PRED_CSV_PATH.exists():
                     st.download_button(
                         "⬇️ Download prediksi_sarima.csv",
