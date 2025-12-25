@@ -1,3 +1,4 @@
+# admin.py (FULL - APP VERSION + CLICK COUNTER + RUN SARIMA)
 from pathlib import Path
 import os
 import pandas as pd
@@ -53,8 +54,10 @@ def _chart_actual(df: pd.DataFrame):
         .encode(
             x=alt.X("tanggal:T", title="Tanggal"),
             y=alt.Y("nilai:Q", title="Nilai (Sisir)"),
-            tooltip=[alt.Tooltip("tanggal:T", title="Tanggal"),
-                     alt.Tooltip("nilai:Q", title="Nilai (sisir)")]
+            tooltip=[
+                alt.Tooltip("tanggal:T", title="Tanggal"),
+                alt.Tooltip("nilai:Q", title="Nilai (sisir)"),
+            ],
         )
         .properties(height=320)
         .interactive()
@@ -65,9 +68,11 @@ def admin_page():
     st.markdown("## 🛠️ Dashboard Admin")
     tab1, tab2 = st.tabs(["📦 Data", "📈 Prediksi"])
 
-    # ---------- TAB DATA ----------
+    # ---------------- TAB DATA ----------------
     with tab1:
         st.markdown("### Data Historis (Excel)")
+        st.write(f"File data aktif: `{DATA_PATH.as_posix()}`")
+
         uploaded = st.file_uploader("Upload data Excel (kolom: tanggal, nilai)", type=["xlsx"])
         if uploaded is not None:
             _save_uploaded_file_to_repo(uploaded)
@@ -83,19 +88,23 @@ def admin_page():
             st.altair_chart(chart, use_container_width=True)
 
         st.divider()
-        Path("data").mkdir(parents=True, exist_ok=True)
         st.markdown("#### DEBUG: isi folder `data/`")
-        st.code("\n".join(sorted(os.listdir("data"))))
+        Path("data").mkdir(parents=True, exist_ok=True)
+        st.code("\n".join(sorted(os.listdir("data"))) if os.path.exists("data") else "(folder data tidak ada)")
 
-    # ---------- TAB PREDIKSI ----------
+    # ---------------- TAB PREDIKSI ----------------
     with tab2:
+        # ========= BUILD CHECK (WAJIB MUNCUL) =========
+        st.write("APP VERSION:", "v2025-12-25-CLICK-COUNTER")
+        st.write("BUILD CHECK: kalau ini gak muncul, berarti deploy belum ke-update")
+
         st.markdown("### Prediksi SARIMA")
         st.info(
             f"order={FIX_ORDER}, seasonal_order={FIX_SEASONAL_ORDER}, steps={FIX_STEPS}\n"
             f"Konversi: 1 sisir ≈ {KG_PER_SISIR} kg"
         )
 
-        # dependency check
+        # cek dependency
         try:
             import statsmodels  # noqa
             st.success("✅ statsmodels OK")
@@ -128,7 +137,8 @@ def admin_page():
             f"{'ADA ✅' if PRED_CSV_PATH.exists() else 'BELUM ❌'}"
         )
 
-        # ===== BUKTI KLIK (Permanen) =====
+        # ========= TEST KLIK PERMANEN =========
+        st.markdown("### 🧪 Test Klik (bukti klik masuk ke Python)")
         if "click_count" not in st.session_state:
             st.session_state.click_count = 0
 
@@ -139,7 +149,7 @@ def admin_page():
 
         st.divider()
 
-        # ===== RUN SARIMA (langsung True dari button) =====
+        # ========= RUN SARIMA (TRUE dari st.button) =========
         run_clicked = st.button("🚀 Jalankan SARIMA", key="btn_run_sarima_true")
         st.write("DEBUG run_clicked =", run_clicked)
 
@@ -162,6 +172,7 @@ def admin_page():
                 st.success("✅ SARIMA selesai & file tersimpan!")
                 st.dataframe(forecast_df, use_container_width=True)
 
+                # download buttons
                 if PRED_CSV_PATH.exists():
                     st.download_button(
                         "⬇️ Download prediksi_sarima.csv",
@@ -185,4 +196,4 @@ def admin_page():
                 st.exception(e)
 
             st.markdown("#### DEBUG: isi folder `data/` setelah run")
-            st.code("\n".join(sorted(os.listdir("data"))))
+            st.code("\n".join(sorted(os.listdir("data"))) if os.path.exists("data") else "(folder data tidak ada)")
