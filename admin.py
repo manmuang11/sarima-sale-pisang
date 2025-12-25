@@ -1,4 +1,4 @@
-# admin.py (DEBUG - FIX CLICK)
+# admin.py
 from pathlib import Path
 import os
 import pandas as pd
@@ -20,7 +20,12 @@ KG_PER_SISIR = 0.5
 def _load_data_from_repo() -> pd.DataFrame:
     if not DATA_PATH.exists():
         return pd.DataFrame(columns=["tanggal", "nilai"])
-    return pd.read_excel(DATA_PATH)
+    try:
+        return pd.read_excel(DATA_PATH)
+    except Exception as e:
+        st.error("❌ Gagal baca Excel (cek openpyxl / file corrupt).")
+        st.exception(e)
+        return pd.DataFrame(columns=["tanggal", "nilai"])
 
 
 def _save_uploaded_file_to_repo(uploaded_file) -> None:
@@ -43,34 +48,26 @@ def _chart_actual(df: pd.DataFrame):
     df2["nilai"] = pd.to_numeric(df2["nilai"], errors="coerce")
     df2 = df2.dropna()
 
-    c = (
+    return (
         alt.Chart(df2)
         .mark_line()
         .encode(
             x=alt.X("tanggal:T", title="Tanggal"),
             y=alt.Y("nilai:Q", title="Nilai (Sisir)"),
-            tooltip=[
-                alt.Tooltip("tanggal:T", title="Tanggal"),
-                alt.Tooltip("nilai:Q", title="Nilai (sisir)"),
-            ],
+            tooltip=[alt.Tooltip("tanggal:T", title="Tanggal"),
+                     alt.Tooltip("nilai:Q", title="Nilai (sisir)")]
         )
         .properties(height=320)
         .interactive()
     )
-    return c
 
 
 def admin_page():
     st.markdown("## 🛠️ Dashboard Admin")
-    st.caption("DEBUG mode: fix klik + tampilkan error SARIMA asli di layar")
-
     tab1, tab2 = st.tabs(["📦 Data", "📈 Prediksi"])
 
-    # ---------------- TAB DATA ----------------
     with tab1:
         st.markdown("### Data Historis (Excel)")
-        st.write(f"File data aktif: `{DATA_PATH.as_posix()}`")
-
         uploaded = st.file_uploader("Upload data Excel (kolom: tanggal, nilai)", type=["xlsx"])
         if uploaded is not None:
             _save_uploaded_file_to_repo(uploaded)
@@ -86,33 +83,33 @@ def admin_page():
             st.altair_chart(chart, use_container_width=True)
 
         st.divider()
-        st.markdown("#### DEBUG: isi folder `data/`")
         Path("data").mkdir(parents=True, exist_ok=True)
-        st.code("\n".join(sorted(os.listdir("data"))) if os.path.exists("data") else "(folder data tidak ada)")
+        st.markdown("#### DEBUG: isi folder `data/`")
+        st.code("\n".join(sorted(os.listdir("data"))))
 
-    # ---------------- TAB PREDIKSI ----------------
     with tab2:
-        st.markdown("### Prediksi SARIMA (Fix)")
+        st.markdown("### Prediksi SARIMA")
         st.info(
             f"order={FIX_ORDER}, seasonal_order={FIX_SEASONAL_ORDER}, steps={FIX_STEPS}\n"
             f"Konversi: 1 sisir ≈ {KG_PER_SISIR} kg"
         )
 
-        # ✅ cek dependency biar jelas
-        st.markdown("#### DEBUG: cek dependencies")
+        # cek dependency
         try:
             import statsmodels  # noqa
             st.success("✅ statsmodels OK")
         except Exception as e:
-            st.error("❌ statsmodels TIDAK ADA / error import")
+            st.error("❌ statsmodels ERROR")
             st.exception(e)
+            st.stop()
 
         try:
             import openpyxl  # noqa
             st.success("✅ openpyxl OK")
         except Exception as e:
-            st.error("❌ openpyxl TIDAK ADA / error import")
+            st.error("❌ openpyxl ERROR")
             st.exception(e)
+            st.stop()
 
         df = _load_data_from_repo()
         if df.empty:
@@ -120,28 +117,28 @@ def admin_page():
             st.stop()
 
         st.markdown("#### DEBUG: cek kolom & tipe data")
-        st.write("Kolom yang kebaca:", list(df.columns))
+        st.write("Kolom:", list(df.columns))
         if "tanggal" not in df.columns or "nilai" not in df.columns:
-            st.error("❌ Excel kamu belum punya kolom persis: 'tanggal' dan 'nilai'")
+            st.error("❌ Excel wajib punya kolom persis: 'tanggal' dan 'nilai'")
             st.stop()
 
-        # ✅ indikator status file
         st.caption(
             f"Status file prediksi_sarima.csv: "
             f"{'ADA ✅' if PRED_CSV_PATH.exists() else 'BELUM ❌'}"
         )
 
-        # ✅ pastiin klik ke-detect (pakai form + session flag)
-        def _mark_clicked():
-            st.session_state["sarima_clicked"] = True
+        # ====== TOMBOL RUN (SIMPLE, NO FORM) ======
+        if "run_sarima" not in st.session_state:
+            st.session_state.run_sarima = False
 
-        st.write("DEBUG: sarima_clicked =", st.session_state.get("sarima_clicked", False))
+        def _start_run():
+            st.session_state.run_sarima = True
 
-        with st.form("run_sarima_form", clear_on_submit=False):
-            submitted = st.form_submit_button("🚀 Jalankan SARIMA", on_click=_mark_clicked)
+        st.button("🚀 Jalankan SARIMA", key="btn_run_sarima", on_click=_start_run)
+        st.write("DEBUG: run_sarima =", st.session_state.run_sarima)
 
-        if submitted:
-            st.warning("🔔 Tombol kepencet. Mulai proses...")  # HARUS MUNCUL KALAU KLIK KEDETECT
+        if st.session_state.run_sarima:
+            st.warning("🔔 Tombol kepencet. Mulai proses...")
 
             try:
                 with st.spinner("Melatih model & membuat prediksi..."):
@@ -157,10 +154,6 @@ def admin_page():
                     _save_forecast(forecast_df)
 
                 st.success("✅ SARIMA selesai & file tersimpan!")
-                st.write("CSV size:", PRED_CSV_PATH.stat().st_size if PRED_CSV_PATH.exists() else "CSV tidak ada")
-                st.write("XLSX size:", OUTPUT_PATH.stat().st_size if OUTPUT_PATH.exists() else "XLSX tidak ada")
-
-                st.markdown("#### Preview forecast_df")
                 st.dataframe(forecast_df, use_container_width=True)
 
                 with st.expander("Summary model"):
@@ -170,5 +163,4 @@ def admin_page():
                 st.error("❌ SARIMA gagal. Ini error aslinya:")
                 st.exception(e)
 
-            st.markdown("#### DEBUG: isi folder `data/` setelah run")
-            st.code("\n".join(sorted(os.listdir("data"))) if os.path.exists("data") else "(folder data tidak ada)")
+            st.session_state.run_sarima = False  # reset biar gak loop
