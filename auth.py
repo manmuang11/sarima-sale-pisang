@@ -1,4 +1,3 @@
-# auth.py
 import streamlit as st
 import hashlib
 
@@ -6,8 +5,11 @@ def _hash(pw: str) -> str:
     return hashlib.sha256(pw.encode("utf-8")).hexdigest()
 
 def _get_users():
+    # Streamlit Cloud: secrets.toml
     if "users" in st.secrets:
         return st.secrets["users"]
+
+    # fallback local
     return {
         "admin": {"password_hash": _hash("admin123"), "role": "admin"},
         "umkm": {"password_hash": _hash("umkm123"), "role": "umkm"},
